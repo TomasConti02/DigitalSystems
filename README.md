@@ -12,14 +12,17 @@ Memory Layout (Each block is 16 bytes):
 |--------------|--------------|--------------|--------------|
 | Address 0    | Address 16   | Address 32   | Address 48   |
 |--------------|--------------|--------------|--------------|
-| Data1: 16B   | Data2: 16B   | Data3: 16B   | Data4: 16B   |
-|--------------|--------------|--------------|--------------|
+|   16B Data   | Int1: 4B     |   16B Data   |   16B Data   |
+|--------------| Int2: 4B     |--------------|--------------|
+               | Int3: 4B     |                         
+               | Int4: 4B     |                           
+               |--------------|
                    ^
                    |
     Data aligned at Address 16
 128-bit Register (16 bytes):
 |---------------------------------------------------------|
-|                  Data2: 16B                             |
+|    Int1: 4B   |   Int2: 4B   |   Int3: 4B   |   Int4: 4B   |
 |---------------------------------------------------------|
-In a single CPU cycle, the 128-bit register reads 16 bytes starting from Address 16.
+In a single CPU cycle, the 128-bit register reads the 4 integers from Address 16.
 ```
