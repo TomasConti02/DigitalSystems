@@ -26,3 +26,35 @@ Memory Layout (Each block is 16 bytes):
 |---------------------------------------------------------|
 In a single CPU cycle, the 128-bit register reads the 4 integers from Address 16.
 ```
+## CUDA
+CUDA A framework for developing SIMD (Single Instruction, Multiple Data) code on NVIDIA GPUs.
+We can have 1D, 2D and 3D block grid anche block.
+```
+Host (CPU):
+|----------------------------------|
+|            Host Code             |
+|----------------------------------|
+          ^
+          | Data transfert by BUS. We need a less number of this operations
+          v
+Device (GPU):
+|----------------------------------------------------------|
+|                       GPU (Device)                       |
+|----------------------------------------------------------|
+          |                Grid of Blocks                  |
+          |------------------------------------------------|
+          |   Block 0   |   Block 1   |   Block 2   | ...   |
+          |------------------------------------------------|
+              |             |             |
+              v             v             v
+          |--------|   |--------|   |--------|
+          | Thread |   | Thread |   | Thread |
+          | 0      |   | 0      |   | 0      |
+          | Thread |   | Thread |   | Thread |
+          | 1      |   | 1      |   | 1      |
+          | ...    |   | ...    |   | ...    |
+          | Thread |   | Thread |   | Thread |
+          | n      |   | n      |   | n      |
+          |--------|   |--------|   |--------|
+Each block contains multiple threads, and the GPU executes threads in parallel.
+```
