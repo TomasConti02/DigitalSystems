@@ -12,7 +12,7 @@
         printf("code: %d, reason: %s\n", error, cudaGetErrorString(error)); \
         exit(1); \
     } \
-} \
+}
 
 void rgbToGrayCPU(unsigned char *rgb, unsigned char *gray, int width, int height) {
     for (int y = 0; y < height; y++) { // Loop over all rows of the image
@@ -60,6 +60,31 @@ __global__ void rgbToGrayGPU(unsigned char *d_rgb, unsigned char *d_gray, int wi
     }
 }
 
+#define BLUR_SIZE 1 // Blur radius (1 means a 3x3 window)
+
+__global__ void blurKernel(unsigned char *in, unsigned char *out, int width, int height) {
+    int Col = blockIdx.x * blockDim.x + threadIdx.x;
+    int Row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (Col < width && Row < height) {
+        int pixVal = 0;
+        int pixels = 0;
+
+        for (int blurRow = -BLUR_SIZE; blurRow <= BLUR_SIZE; ++blurRow) {
+            for (int blurCol = -BLUR_SIZE; blurCol <= BLUR_SIZE; ++blurCol) {
+                int curRow = Row + blurRow;
+                int curCol = Col + blurCol;
+                if (curRow >= 0 && curRow < height && curCol >= 0 && curCol < width) {
+                    pixVal += in[curRow * width + curCol];
+                    pixels++;
+                }
+            }
+        }
+
+        out[Row * width + Col] = (unsigned char)(pixVal / pixels);
+    }
+}
+
 int main() {
     const char* imagePath = "/content/Prova1.png"; // Path of the input image
     int width, height, channels;
@@ -76,10 +101,11 @@ int main() {
     unsigned char *cpu_gray = (unsigned char *)malloc(imageSize);
     rgbToGrayCPU(rgb, cpu_gray, width, height);
 
-    unsigned char *d_rgb, *d_gray, *d_flipped;
+    unsigned char *d_rgb, *d_gray, *d_flipped, *d_blur;
     CHECK(cudaMalloc((void **)&d_rgb, rgbSize));
     CHECK(cudaMalloc((void **)&d_gray, imageSize));
     CHECK(cudaMalloc((void **)&d_flipped, rgbSize));
+    CHECK(cudaMalloc((void **)&d_blur, imageSize)); // Allocate memory for the blurred image
 
     CHECK(cudaMemcpy(d_rgb, rgb, rgbSize, cudaMemcpyHostToDevice));
 
@@ -112,14 +138,25 @@ int main() {
     // Save the flipped image
     stbi_write_png("output_flipped.png", width, height, 3, h_flipped, width * 3);
 
+    // Apply blur to the grayscale image
+    unsigned char *h_blur = (unsigned char *)malloc(imageSize);
+    blurKernel<<<grid, block>>>(d_gray, d_blur, width, height); // Launch the blur kernel
+    CHECK(cudaDeviceSynchronize());
+    CHECK(cudaMemcpy(h_blur, d_blur, imageSize, cudaMemcpyDeviceToHost));
+
+    // Save the blurred image
+    stbi_write_png("output_blur.png", width, height, 1, h_blur, width);
+
     // Free memory
     stbi_image_free(rgb);
     free(h_gray);
     free(cpu_gray);
     free(h_flipped);
+    free(h_blur);
     CHECK(cudaFree(d_rgb));
     CHECK(cudaFree(d_gray));
     CHECK(cudaFree(d_flipped));
+    CHECK(cudaFree(d_blur));
     CHECK(cudaDeviceReset());
 
     return 0;
