@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "stb_image.h"
 #include "stb_image_write.h"
-
 #define CHECK(call) { \
     const cudaError_t error = call; \
     if (error != cudaSuccess) { \
@@ -13,45 +12,41 @@
         exit(1); \
     } \
 } \
-
-
 void rgbToGrayCPU(unsigned char *rgb, unsigned char *gray, int width, int height) {
 for (int y = 0; y < height; y++) { // Loop over all rows of the image
-    for (int x = 0; x < width; x++) { // Loop over all pixels in a row
-    int rgbOffset = (y * width + x) * 3; // Calculate the offset for the RGB pixel
-        int grayOffset = y * width + x; // Calculate the offset for the grayscale pixel
-        unsigned char r = rgb[rgbOffset]; // Read the red value
-        unsigned char g = rgb[rgbOffset + 1]; // Read the green value
-        unsigned char b = rgb[rgbOffset + 2]; // Read the blue value
-        gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b); // RGB->Gray
-    }
+	for (int x = 0; x < width; x++) { // Loop over all pixels in a row
+		int rgbOffset = (y * width + x) * 3; // Calculate the offset for the RGB pixel
+		int grayOffset = y * width + x; // Calculate the offset for the grayscale pixel
+		unsigned char r = rgb[rgbOffset]; // Read the red value
+		unsigned char g = rgb[rgbOffset + 1]; // Read the green value
+		unsigned char b = rgb[rgbOffset + 2]; // Read the blue value
+		gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b); // RGB->Gray
+	}
 }
 }
 
 __global__ void rgbToGrayGPU(unsigned char *d_rgb, unsigned char *d_gray, int width, int height) {
     int ix = blockIdx.x * blockDim.x + threadIdx.x; // Calculate the x-coordinate of the pixel
     int iy = blockIdx.y * blockDim.y + threadIdx.y; // Calculate the y-coordinate of the pixel
-
     // Boundary check: ensures the thread is within the image
     if (ix < width && iy < height) {
-        //We use the Interleaved rappresentation 
+    //We use the Interleaved rappresentation 
         int rgbOffset = (iy * width + ix) * 3; // Calculate the offset for the RGB pixel
         int grayOffset = iy * width + ix; // Calculate the offset for the grayscale pixel
-
         unsigned char r = d_rgb[rgbOffset];     // Read the red value
         unsigned char g = d_rgb[rgbOffset + 1]; // Read the green value
         unsigned char b = d_rgb[rgbOffset + 2]; // Read the blue value
-
-        // Convert RGB to grayscale
+        // Convert RGB to grayscale Standard
         d_gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b);
     }
 }
 
 int main() {
-    const char* imagePath = "/content/Prova1.png"; // Specifica qui il percorso dell'immagine
+    const char* imagePath = "/content/Prova1.png"; //Path of the image that we want download 
     // Load the image using "stb_image.h"
     int width, height, channels;
-    unsigned char *rgb = stbi_load(imagePath, &width, &height, &channels, 3);
+    //Interleaved Rappresentazione R1-G1-B1-R2-G2-B2...
+    unsigned char *rgb = stbi_load(imagePath, &width, &height, &channels, 3); //3 channels because we have a RGB image in input
     if (!rgb) {
         printf("Error loading image %s\n", imagePath);
         return 1;
@@ -60,14 +55,12 @@ int main() {
 
     // Allocate host memory for grayscale image
     int imageSize = width * height;
-    int rgbSize = imageSize * 3;
-    unsigned char *h_gray = (unsigned char *)malloc(imageSize); // Allocate memory for GPU output
+    int rgbSize = imageSize * 3; //one for every channel RGB
+    unsigned char *h_gray = (unsigned char *)malloc(imageSize); // Allocate memory for GPU output only 1 channel SIZE
     unsigned char *cpu_gray = (unsigned char *)malloc(imageSize); // Allocate memory for CPU output
-
     // Convert the image to grayscale on the CPU
     rgbToGrayCPU(rgb, cpu_gray, width, height);
-
-    // Allocate device memory
+    // Allocate device memory for DEVICE -> GPU
     unsigned char *d_rgb, *d_gray;
     CHECK(cudaMalloc((void **)&d_rgb, rgbSize)); // Allocate memory for the RGB image on the GPU
     CHECK(cudaMalloc((void **)&d_gray, imageSize)); // Allocate memory for the grayscale output on the GPU
@@ -80,8 +73,7 @@ int main() {
     dim3 grid((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
     rgbToGrayGPU<<<grid, block>>>(d_rgb, d_gray, width, height); // Launch the kernel
     CHECK(cudaDeviceSynchronize()); // Wait for the kernel to finish
-
-    // Copy the result from device to host
+    // Copy the result [Gray Image] from device to host
     CHECK(cudaMemcpy(h_gray, d_gray, imageSize, cudaMemcpyDeviceToHost));
 
     // Verify the result
@@ -104,7 +96,6 @@ int main() {
     free(cpu_gray);
     CHECK(cudaFree(d_rgb));
     CHECK(cudaFree(d_gray));
-
     // Reset the CUDA device
     CHECK(cudaDeviceReset());
 
