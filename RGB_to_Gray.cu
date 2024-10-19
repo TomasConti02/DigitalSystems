@@ -17,14 +17,14 @@
 
 void rgbToGrayCPU(unsigned char *rgb, unsigned char *gray, int width, int height) {
 for (int y = 0; y < height; y++) { // Loop over all rows of the image
-for (int x = 0; x < width; x++) { // Loop over all pixels in a row
-int rgbOffset = (y * width + x) * 3; // Calculate the offset for the RGB pixel
-int grayOffset = y * width + x; // Calculate the offset for the grayscale pixel
-unsigned char r = rgb[rgbOffset]; // Read the red value
-unsigned char g = rgb[rgbOffset + 1]; // Read the green value
-unsigned char b = rgb[rgbOffset + 2]; // Read the blue value
-gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b); // RGB->Gray
-}
+    for (int x = 0; x < width; x++) { // Loop over all pixels in a row
+    int rgbOffset = (y * width + x) * 3; // Calculate the offset for the RGB pixel
+        int grayOffset = y * width + x; // Calculate the offset for the grayscale pixel
+        unsigned char r = rgb[rgbOffset]; // Read the red value
+        unsigned char g = rgb[rgbOffset + 1]; // Read the green value
+        unsigned char b = rgb[rgbOffset + 2]; // Read the blue value
+        gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b); // RGB->Gray
+    }
 }
 }
 
@@ -34,6 +34,7 @@ __global__ void rgbToGrayGPU(unsigned char *d_rgb, unsigned char *d_gray, int wi
 
     // Boundary check: ensures the thread is within the image
     if (ix < width && iy < height) {
+        //We use the Interleaved rappresentation 
         int rgbOffset = (iy * width + ix) * 3; // Calculate the offset for the RGB pixel
         int grayOffset = iy * width + ix; // Calculate the offset for the grayscale pixel
 
