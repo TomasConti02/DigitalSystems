@@ -1,3 +1,4 @@
+//you have to download on the same path of the project the gitHub library stb_image.h/stb_image_write.h and the image that you want manage
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stdio.h>
