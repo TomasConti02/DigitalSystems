@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stdio.h>
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -10,6 +12,20 @@
         exit(1); \
     } \
 } \
+
+
+void rgbToGrayCPU(unsigned char *rgb, unsigned char *gray, int width, int height) {
+for (int y = 0; y < height; y++) { // Loop over all rows of the image
+for (int x = 0; x < width; x++) { // Loop over all pixels in a row
+int rgbOffset = (y * width + x) * 3; // Calculate the offset for the RGB pixel
+int grayOffset = y * width + x; // Calculate the offset for the grayscale pixel
+unsigned char r = rgb[rgbOffset]; // Read the red value
+unsigned char g = rgb[rgbOffset + 1]; // Read the green value
+unsigned char b = rgb[rgbOffset + 2]; // Read the blue value
+gray[grayOffset] = (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b); // RGB->Gray
+}
+}
+}
 
 __global__ void rgbToGrayGPU(unsigned char *d_rgb, unsigned char *d_gray, int width, int height) {
     int ix = blockIdx.x * blockDim.x + threadIdx.x; // Calculate the x-coordinate of the pixel
@@ -30,8 +46,7 @@ __global__ void rgbToGrayGPU(unsigned char *d_rgb, unsigned char *d_gray, int wi
 }
 
 int main() {
-    const char* imagePath = "path/to/your/image.png"; // Specifica qui il percorso dell'immagine
-
+    const char* imagePath = "/content/Prova1.png"; // Specifica qui il percorso dell'immagine
     // Load the image using "stb_image.h"
     int width, height, channels;
     unsigned char *rgb = stbi_load(imagePath, &width, &height, &channels, 3);
@@ -48,7 +63,7 @@ int main() {
     unsigned char *cpu_gray = (unsigned char *)malloc(imageSize); // Allocate memory for CPU output
 
     // Convert the image to grayscale on the CPU
-    rgbToGrayscaleCPU(rgb, cpu_gray, width, height);
+    rgbToGrayCPU(rgb, cpu_gray, width, height);
 
     // Allocate device memory
     unsigned char *d_rgb, *d_gray;
