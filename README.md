@@ -58,7 +58,7 @@ Device (GPU):
           |--------|   |--------|   |--------|
 Each block contains multiple threads, and the GPU executes threads in parallel.
 ```
-#CNNs Tumor Detections
+##CNNs Tumor Detections
 ```
 Model: "sequential_5"
 
