@@ -59,7 +59,7 @@ Device (GPU):
 Each block contains multiple threads, and the GPU executes threads in parallel.
 ```
 #CNNs Tumor Detections
-----
+```
 Model: "sequential_5"
 
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
@@ -95,6 +95,4 @@ Model: "sequential_5"
  Trainable params: 4,742,146 (18.09 MB)
 
  Non-trainable params: 0 (0.00 B)
-
-
-----
+```
