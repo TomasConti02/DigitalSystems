@@ -59,8 +59,11 @@ x /= 255.0
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
 num_classes = 2
 model = keras.Sequential([
+    #first layer, we have 32 filter for 32 activation-maps for output
     layers.Conv2D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=[128, 128, 3]),
-    layers.MaxPool2D(),
+    layers.MaxPool2D(), #pool of img 128x128 -> 64x6
+    #after cut the img size with pool we can increase the number of filter 
+    #now we go deeper and deeper in img feald 
     layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
     layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
     layers.MaxPool2D(),
@@ -100,3 +103,23 @@ ax.plot(history.history['accuracy'],label='train accuracy')
 ax.legend()
 
 plt.show()
+"""
+model = keras.Sequential([
+    layers.Conv2D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=[128, 128, 3]),
+    layers.BatchNormalization(),
+    layers.MaxPool2D(),
+    layers.Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPool2D(),
+    layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPool2D(),
+    layers.Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPool2D(),
+    layers.Flatten(),
+    layers.Dense(128, activation='relu'),
+    layers.Dense(512, activation='relu'),
+    layers.Dense(num_classes, activation='softmax'),
+])
+"""
