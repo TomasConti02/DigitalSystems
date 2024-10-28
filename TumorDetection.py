@@ -12,7 +12,7 @@ from tensorflow.keras.utils import to_categorical
 import tensorflow as tf
 
 from keras.models import Sequential
-#funzioni di costruzione del modello 
+#funzioni di costruzione del modello
 from keras.layers import Dense, Dropout, Activation, Flatten, GlobalAveragePooling2D
 from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras import layers
@@ -52,18 +52,11 @@ for index in range(1, num_of_images + 1):
     plt.axis('off')
     plt.imshow(x[Rand_image], cmap='gray_r')
 #data processing
-"""
-x = x.astype("float32")
-y = to_categorical(y, num_classes=2)
-x /= 255.0
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-num_classes = 2
-model = keras.Sequential([
     #first layer, we have 32 filter for 32 activation-maps for output
     layers.Conv2D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=[128, 128, 3]),
     layers.MaxPool2D(), #pool of img 128x128 -> 64x6
-    #after cut the img size with pool we can increase the number of filter 
-    #now we go deeper and deeper in img feald 
+    #after cut the img size with pool we can increase the number of filter
+    #now we go deeper and deeper in img feald
     layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
     layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
     layers.MaxPool2D(),
@@ -74,36 +67,13 @@ model = keras.Sequential([
     layers.Dense(128, activation='relu'),
     layers.Dense(512, activation='relu'),
     layers.Dense(num_classes, activation='softmax'),
-])
-print(model.summary())
-model.compile(loss = 'categorical_crossentropy', optimizer = keras.optimizers.Adam(0.001), metrics = ['accuracy'])
-class myCallback(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs={}):
-        if logs.get('accuracy') > 0.990 and logs.get('accuracy') < 1:
-            self.model.stop_training = True
-            print("\nReached 99% accuracy so cancelling training!")
-          
-            
-back = myCallback()  
-history = model.fit(X_train, 
-                    y_train,
-                    epochs=100,
-                    batch_size=32,
-                   callbacks=[back])
-y_pred = model.predict(X_test)
-y_pred_classes = np.argmax(y_pred, axis=1)
-y_true = np.argmax(y_test, axis=1)
-print("Classification Report:\n", classification_report(y_true, y_pred_classes))
-fig, ax = plt.subplots(figsize=(12,5))
 
-ax.plot(history.history['loss'],label='train loss')
-
-ax.plot(history.history['accuracy'],label='train accuracy')
-
-ax.legend()
-
-plt.show()
 """
+x = x.astype("float32")
+y = to_categorical(y, num_classes=2)
+x /= 255.0
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+num_classes = 2
 model = keras.Sequential([
     layers.Conv2D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=[128, 128, 3]),
     layers.BatchNormalization(),
@@ -122,4 +92,85 @@ model = keras.Sequential([
     layers.Dense(512, activation='relu'),
     layers.Dense(num_classes, activation='softmax'),
 ])
-"""
+print(model.summary())
+model.compile(loss = 'categorical_crossentropy', optimizer = keras.optimizers.Adam(0.001), metrics = ['accuracy'])
+class myCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs={}):
+        if logs.get('accuracy') > 0.990 and logs.get('accuracy') < 1:
+            self.model.stop_training = True
+            print("\nReached 99% accuracy so cancelling training!")
+
+
+back = myCallback()
+history = model.fit(X_train,
+                    y_train,
+                    epochs=100,
+                    batch_size=32,
+                   callbacks=[back])
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = np.argmax(y_test, axis=1)
+print("Classification Report:\n", classification_report(y_true, y_pred_classes))
+fig, ax = plt.subplots(figsize=(12,5))
+
+ax.plot(history.history['loss'],label='train loss')
+
+ax.plot(history.history['accuracy'],label='train accuracy')
+
+ax.legend()
+
+plt.show()
+print("\nSalvataggio del modello!")
+model.save('/content/drive/MyDrive/ProjectCNNsBrainTumor/tumor_classification_model1.keras')
+print("\nModello salvato con successo!")
+def predict_image(image_path):
+    # Carica l'immagine
+    img = cv2.imread(image_path)
+    #img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #plt.imshow(img_rgb)
+   # plt.axis('off')  # Nasconde gli assi
+   # plt.title("Immagine da testare")
+    #plt.show()
+    img = cv2.resize(img, (128, 128))  # Ridimensiona l'immagine
+    #img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #plt.imshow(img_rgb)
+    #plt.axis('off')  # Nasconde gli assi
+    #plt.title("Immagine da testare")
+    #plt.show()
+    img = np.array(img).astype("float32") / 255.0  # Normalizza
+    img = np.expand_dims(img, axis=0)  # Aggiungi dimensione batch
+    # Fai la previsione
+    prediction = model.predict(img)
+    predicted_class = np.argmax(prediction, axis=1)
+    return predicted_class[0]  # Restituisce la classe prevista (0 o 1)
+
+
+
+# Percorso dell'immagine da testare
+test_image_path1 = '/content/Te-me_0109.jpg'
+test_image_path2 = '/content/Te-no_0014.jpg'
+test_image_path3 = '/content/Te-no_0023.jpg'
+# Esegui la previsione
+print("\n Caso Tumore si :")
+predicted_class = predict_image(test_image_path1)
+# Stampa il risultato
+if predicted_class == 0:
+    print("\nNessun tumore previsto.")
+else:
+    print("\nTumore previsto.")
+
+print("\n Caso Tumore no :")
+predicted_class = predict_image(test_image_path2)
+# Stampa il risultato
+if predicted_class == 0:
+    print("\nNessun tumore previsto.")
+else:
+    print("\nTumore previsto.")
+
+print("\n Caso Tumore no :")
+predicted_class = predict_image(test_image_path3)
+# Stampa il risultato
+if predicted_class == 0:
+    print("\nNessun tumore previsto.")
+else:
+    print("\nTumore previsto.")
