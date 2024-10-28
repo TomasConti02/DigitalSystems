@@ -29,8 +29,12 @@ def load_image(Folder): #tack the folder of TumorImage
             images.append(img)
     return images
 
-no_img=load_image(no_tumor_path)
-yes_img=load_image(yes_tumor_path)
+no_img = load_image(no_tumor_path)
+print("\nDimensione no_img:", len(no_img))  # Stampa la lunghezza della lista no_img
+
+yes_img = load_image(yes_tumor_path)
+print("\nDimensione yes_img:", len(yes_img))  # Stampa la lunghezza della lista yes_img
+
 #make labels
 no_labels=[0]*len(no_img)
 yes_labels=[1]*len(yes_img)
