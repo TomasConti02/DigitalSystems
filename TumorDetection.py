@@ -104,13 +104,11 @@ class myCallback(tf.keras.callbacks.Callback):
             self.model.stop_training = True
             print("\nReached 99% accuracy so cancelling training!")
 
-
 back = myCallback()
 history = model.fit(X_train,
                     y_train,
                     epochs=100,
-                    batch_size=32,
-                   callbacks=[back])
+                    batch_size=32)
 y_pred = model.predict(X_test)
 y_pred_classes = np.argmax(y_pred, axis=1)
 y_true = np.argmax(y_test, axis=1)
@@ -127,7 +125,7 @@ plt.show()
 print("\nSalvataggio del modello!")
 model.save('/content/drive/MyDrive/ProjectCNNsBrainTumor/tumor_classification_model1.keras')
 print("\nModello salvato con successo!")
-def predict_image(image_path):
+def predict_image(image_path, esito):
     # Carica l'immagine
     img = cv2.imread(image_path)
     #img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -146,35 +144,24 @@ def predict_image(image_path):
     # Fai la previsione
     prediction = model.predict(img)
     predicted_class = np.argmax(prediction, axis=1)
-    return predicted_class[0]  # Restituisce la classe prevista (0 o 1)
+    # Stampa il risultato
+    if (predicted_class == 0 and esito.strip().upper() == "NO") or (predicted_class == 1 and esito.strip().upper() == "SI"):
+        print(f"Per l'immagine '{image_path.split('/')[-1]}': Indovinato, {esito} tumore.")
+    else:
+        print(f"Per l'immagine '{image_path.split('/')[-1]}': Tumore previsto, ma atteso '{esito}'.")
 
 
 
 # Percorso dell'immagine da testare
 test_image_path1 = '/content/Te-me_0109.jpg'
 test_image_path2 = '/content/Te-no_0014.jpg'
-test_image_path3 = '/content/Te-no_0023.jpg'
+test_image_path3 = '/content/Te-no_0017.jpg'
+test_image_path4 = '/content/Te-no_0023.jpg'
+test_image_path5 = '/content/Te-pi_0236.jpg'
 # Esegui la previsione
-print("\n Caso Tumore si :")
-predicted_class = predict_image(test_image_path1)
-# Stampa il risultato
-if predicted_class == 0:
-    print("\nNessun tumore previsto.")
-else:
-    print("\nTumore previsto.")
 
-print("\n Caso Tumore no :")
-predicted_class = predict_image(test_image_path2)
-# Stampa il risultato
-if predicted_class == 0:
-    print("\nNessun tumore previsto.")
-else:
-    print("\nTumore previsto.")
-
-print("\n Caso Tumore no :")
-predicted_class = predict_image(test_image_path3)
-# Stampa il risultato
-if predicted_class == 0:
-    print("\nNessun tumore previsto.")
-else:
-    print("\nTumore previsto.")
+predict_image(test_image_path1, "SI")
+predicted_class = predict_image(test_image_path2, "NO")
+predicted_class = predict_image(test_image_path3, "NO")
+predicted_class = predict_image(test_image_path4, "NO")
+predicted_class = predict_image(test_image_path5, "SI")
