@@ -92,8 +92,9 @@ model = keras.Sequential([
     layers.BatchNormalization(),
     layers.MaxPool2D(),
     layers.Flatten(),
+    layers.Dense(256, activation='relu'),
+    layers.Dropout(0.5)
     layers.Dense(128, activation='relu'),
-    layers.Dense(512, activation='relu'),
     layers.Dense(num_classes, activation='softmax'),
 ])
 print(model.summary())
