@@ -73,6 +73,51 @@ for index in range(1, num_of_images + 1):
     layers.Dense(num_classes, activation='softmax'),
 
 """
+"""
+model = models.Sequential([
+    # Primo blocco
+    layers.Conv2D(128, (3, 3), activation='relu', padding='same', input_shape=(128, 128, 3)),  # Usa la dimensione corretta per i tuoi dati
+    layers.BatchNormalization(),
+    layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Dropout(0.1),
+     # Secondo blocco
+    layers.Conv2D(64, (3, 3), activation='relu', padding='same'), 
+    layers.BatchNormalization(),
+    layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Dropout(0.1),
+
+    # Terzo blocco
+    layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Dropout(0.1),
+
+    # Quarto blocco
+    layers.Conv2D(16, (3, 3), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.Conv2D(16, (3, 3), activation='relu', padding='same'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Dropout(0.1),
+
+    # Quinto blocco
+    layers.Conv2D(8, (3, 3), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.Conv2D(8, (3, 3), activation='relu', padding='same'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Dropout(0.1),
+
+    # Strato Flatten e Fully Connected
+    layers.Flatten(),
+    layers.Dense(1024, activation='relu'),
+    layers.Dropout(0.2),
+
+    # Strato di output
+    layers.Dense(num_classes, activation='softmax')
+])
+"""
 x = x.astype("float32")
 y = to_categorical(y, num_classes=2)
 x /= 255.0
