@@ -3,6 +3,7 @@
 #include <cstdlib> // per aligned_alloc o posix_memalign
 #include <cstring> // per memset
 #include <immintrin.h> // Intrinseci di Intel x86
+#define VECTOR_LENGTH 8
 #define SSE_DATA_LANE 16 // Allineamento a 16 byte
 
 struct WAVHeader {
@@ -86,7 +87,9 @@ void printSampleValues(const std::string& filename) {
     __m128i *PuntatoreAllaMusica = (__m128i*)alignedData;
     __m128i passo;
     std::cout << "Valori dei campioni (SIMD):\n";
-    for (int i = 0; i < numSamples/8; ++i) {
+    std::cout << "Il resto della divisione di " << numSamples << " diviso " << VECTOR_LENGTH << " è: " << numSamples % VECTOR_LENGTH << std::endl;
+    /*
+    for (int i = 0; i < numSamples/VECTOR_LENGTH; ++i) {
          passo = _mm_load_si128(PuntatoreAllaMusica+i);
          //print_register(passo);
     }
@@ -94,13 +97,13 @@ void printSampleValues(const std::string& filename) {
     // Stampa sequenziale dei campioni per confronto
     std::cout << "Valori dei campioni (sequenziale):\n";
     for (int i = 0; i < numSamples; ++i) {
-        std::cout << alignedData[i] << " ";
+        //std::cout << alignedData[i] << " ";
         if ((i + 1) % 8 == 0) { // Stampa 8 valori per riga
             std::cout << "\n";
         }
     }
     std::cout << std::endl;
-
+*/
     free(alignedData);
     file.close();
 }
