@@ -1,5 +1,5 @@
-We store here our CUDA codes.
-tomas conti.
+We store here our CUDA codes, provided by
+tomas conti & 
 jacopo chergui.
 ## SIMD
 We use the SSE (Streaming SIMD Extensions) instruction set architecture for x86 processors to enable SIMD (Single Instruction, Multiple Data) operations. 
