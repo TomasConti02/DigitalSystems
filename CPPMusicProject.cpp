@@ -439,3 +439,109 @@ int main() {
     return 0;
 }
 */
+ ---------------------------------------------------------------------
+ #include <vector>
+#include <iostream>
+#include <complex>
+#include <cmath>
+
+#define SAMPLE_RATE 44100  // Frequenza di campionamento (Hz)
+#define NUM_SAMPLES 1024   // Numero di campioni del segnale
+
+// Funzione per applicare la FFT (trasformata di Fourier) a un segnale
+void fft(std::vector<std::complex<double>>& signal) {
+    int N = signal.size();
+    if (N <= 1) return;
+
+    std::vector<std::complex<double>> even(N / 2), odd(N / 2);
+
+    for (int i = 0; i < N / 2; ++i) {
+        even[i] = signal[2 * i];
+        odd[i] = signal[2 * i + 1];
+    }
+
+    fft(even);
+    fft(odd);
+
+    for (int i = 0; i < N / 2; ++i) {
+        double angle = -2 * M_PI * i / N;
+        std::complex<double> w(cos(angle), sin(angle));
+        signal[i] = even[i] + w * odd[i];
+        signal[i + N / 2] = even[i] - w * odd[i];
+    }
+}
+
+// Funzione per applicare un filtro passa basso nel dominio delle frequenze
+void applyLowPassFilterFFT(std::vector<std::complex<double>>& fftSignal, double targetFreq) {
+    int N = fftSignal.size();
+    double freqResolution = SAMPLE_RATE / N;
+
+    // Frequenza massima per cui vogliamo mantenere i campioni
+    int maxFreqIndex = (int)(targetFreq / freqResolution);
+
+    // Filtrare tutte le frequenze superiori alla frequenza di taglio
+    for (int i = 0; i < N; ++i) {
+        if (i > maxFreqIndex) {
+            fftSignal[i] = std::complex<double>(0.0, 0.0);  // Impostiamo a zero le frequenze superiori alla frequenza di taglio
+        }
+    }
+}
+
+// Funzione per applicare la IFFT (trasformata inversa di Fourier) a un segnale
+void ifft(std::vector<std::complex<double>>& signal) {
+    int N = signal.size();
+    for (auto& val : signal) {
+        val = std::conj(val);  // Conjugare i numeri complessi
+    }
+
+    fft(signal);  // Chiamata alla FFT (invertita)
+
+    for (auto& val : signal) {
+        val = std::conj(val) / N;  // Dividere per N e conjugare di nuovo
+    }
+}
+
+int main() {
+    // Esempio di segnale audio (simulato con un array di 1024 campioni)
+    std::vector<int16_t> audioSignal(NUM_SAMPLES);
+
+    // Riempie il segnale con un valore di esempio (simulazione di un segnale audio)
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        audioSignal[i] = (i % 100) * 10;  // Simula alcuni valori di segnale
+    }
+
+    // Trasformare il segnale nel dominio delle frequenze
+    std::vector<std::complex<double>> fftSignal(NUM_SAMPLES);
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        fftSignal[i] = std::complex<double>(audioSignal[i], 0.0);  // Converte il segnale in formato complesso
+    }
+
+    // Frequenza di taglio del filtro passa basso (esempio, 1000 Hz)
+    double cutoffFreq = 1000.0;
+
+    // Applicare la FFT
+    fft(fftSignal);
+
+    // Applicare il filtro passa basso
+    applyLowPassFilterFFT(fftSignal, cutoffFreq);
+
+    // Applicare la IFFT per tornare nel dominio del tempo
+    ifft(fftSignal);
+
+    // Ripristinare il segnale filtrato nel dominio del tempo
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        audioSignal[i] = (int16_t)(fftSignal[i].real());  // Prendere solo la parte reale
+    }
+
+    // Stampare i campioni filtrati
+    std::cout << "Campioni filtrati (FFT):\n";
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        std::cout << audioSignal[i] << " ";
+        if ((i + 1) % 8 == 0) {  // Stampa ogni 8 valori per riga
+            std::cout << "\n";
+        }
+    }
+
+    return 0;
+}
+
