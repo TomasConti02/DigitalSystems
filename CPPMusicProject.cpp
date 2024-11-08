@@ -544,4 +544,87 @@ int main() {
 
     return 0;
 }
+----------------------------------------------------------------------------------------------------------------
+ #include <vector>
+#include <iostream>
+#include <cmath>
+
+#define SAMPLE_RATE 44100  // Frequenza di campionamento (Hz)
+#define NUM_SAMPLES 1024   // Numero di campioni del segnale
+
+// Funzione per applicare la FFT (esempio semplice) su due vettori separati
+void fft(std::vector<double>& real, std::vector<double>& imag) {
+    int N = real.size();
+    if (N <= 1) return;
+
+    std::vector<double> realEven(N / 2), realOdd(N / 2);
+    std::vector<double> imagEven(N / 2), imagOdd(N / 2);
+
+    for (int i = 0; i < N / 2; ++i) {
+        realEven[i] = real[2 * i];
+        imagEven[i] = imag[2 * i];
+        realOdd[i] = real[2 * i + 1];
+        imagOdd[i] = imag[2 * i + 1];
+    }
+
+    fft(realEven, imagEven);
+    fft(realOdd, imagOdd);
+
+    for (int i = 0; i < N / 2; ++i) {
+        double angle = -2 * M_PI * i / N;
+        double cosAngle = cos(angle);
+        double sinAngle = sin(angle);
+
+        double tempReal = cosAngle * realOdd[i] - sinAngle * imagOdd[i];
+        double tempImag = sinAngle * realOdd[i] + cosAngle * imagOdd[i];
+
+        real[i] = realEven[i] + tempReal;
+        imag[i] = imagEven[i] + tempImag;
+        real[i + N / 2] = realEven[i] - tempReal;
+        imag[i + N / 2] = imagEven[i] - tempImag;
+    }
+}
+
+// Funzione per applicare un filtro passa basso
+void applyLowPassFilterFFT(std::vector<double>& real, std::vector<double>& imag, double targetFreq) {
+    int N = real.size();
+    double freqResolution = SAMPLE_RATE / N;
+    int maxFreqIndex = (int)(targetFreq / freqResolution);
+
+    for (int i = 0; i < N; ++i) {
+        if (i > maxFreqIndex) {
+            real[i] = 0.0;  // Impostiamo la parte reale a zero
+            imag[i] = 0.0;  // Impostiamo la parte immaginaria a zero
+        }
+    }
+}
+
+int main() {
+    std::vector<double> real(NUM_SAMPLES), imag(NUM_SAMPLES, 0.0);
+
+    // Riempie il vettore con valori di esempio
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        real[i] = (i % 100) * 10;  // Simulazione di un segnale
+    }
+
+    // Frequenza di taglio del filtro passa basso (esempio, 1000 Hz)
+    double cutoffFreq = 1000.0;
+
+    // Applicare la FFT
+    fft(real, imag);
+
+    // Applicare il filtro passa basso
+    applyLowPassFilterFFT(real, imag, cutoffFreq);
+
+    // Stampare i campioni filtrati
+    std::cout << "Parte reale filtrata (FFT):\n";
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        std::cout << real[i] << " ";
+        if ((i + 1) % 8 == 0) {
+            std::cout << "\n";
+        }
+    }
+
+    return 0;
+}
 
