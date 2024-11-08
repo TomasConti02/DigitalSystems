@@ -309,3 +309,133 @@ int main() {
     return 0;
 }
 */
+----------------------------------------------------------------------------------------------------------------
+ /*
+ #include <immintrin.h>
+#include <vector>
+#include <complex>
+#include <cmath>
+#include <iostream>
+
+#define SAMPLE_RATE 44100   // Frequenza di campionamento (Hz)
+#define NUM_SAMPLES 1024    // Numero di campioni del segnale
+
+// Funzione per applicare un filtro passa banda (solo una frequenza specifica) utilizzando SIMD (SSE)
+void applyBandpassFilterSIMD(std::vector<std::complex<double>>& fftResult, double targetFreq, double bandwidth) {
+    int N = fftResult.size();
+    double freqResolution = SAMPLE_RATE / N;
+    
+    // Maschere di confronto (usiamo SSE per caricare più valori contemporaneamente)
+    __m128d targetFreqVec = _mm_set1_pd(targetFreq);  // La frequenza di destinazione
+    __m128d bandwidthVec = _mm_set1_pd(bandwidth);     // La larghezza di banda
+
+    for (int i = 0; i < N; i += 2) {  // Elaboriamo 2 valori alla volta con SSE
+        double currentFreq0 = i * freqResolution;
+        double currentFreq1 = (i + 1) * freqResolution;
+
+        // Carichiamo le frequenze correnti in un registro SIMD
+        __m128d currentFreqVec = _mm_set_pd(currentFreq1, currentFreq0);
+
+        // Calcoliamo la differenza tra la frequenza corrente e la frequenza target
+        __m128d diff = _mm_sub_pd(currentFreqVec, targetFreqVec);
+
+        // Calcoliamo il valore assoluto delle differenze
+        __m128d absDiff = _mm_abs_pd(diff);
+
+        // Confrontiamo se la differenza è maggiore della larghezza di banda
+        __m128d mask = _mm_cmpgt_pd(absDiff, bandwidthVec);  // Se absDiff > bandwidth, maschera = 1 (elimina)
+
+        // Carica i valori FFT correnti in un registro
+        __m128d realPart0 = _mm_set_pd(fftResult[i + 1].real(), fftResult[i].real());
+        __m128d imagPart0 = _mm_set_pd(fftResult[i + 1].imag(), fftResult[i].imag());
+
+        // Applicare la maschera per eliminare le frequenze fuori dalla larghezza di banda
+        realPart0 = _mm_andnot_pd(mask, realPart0);  // Mantieni 0 se la frequenza non è nella larghezza di banda
+        imagPart0 = _mm_andnot_pd(mask, imagPart0);  // Mantieni 0 se la frequenza non è nella larghezza di banda
+
+        // Aggiorna il vettore fftResult con i nuovi valori filtrati
+        fftResult[i].real(_mm_cvtsd_f64(realPart0)); 
+        fftResult[i].imag(_mm_cvtsd_f64(imagPart0));
+        fftResult[i + 1].real(_mm_cvtsd_f64(_mm_shuffle_pd(realPart0, realPart0, 1)));
+        fftResult[i + 1].imag(_mm_cvtsd_f64(_mm_shuffle_pd(imagPart0, imagPart0, 1)));
+    }
+}
+
+int main() {
+    // Esempio di segnale audio (simulato con un array di 1024 campioni)
+    std::vector<std::complex<double>> fftResult(NUM_SAMPLES);
+
+    // Riempie il segnale con un valore di esempio (simulazione di un segnale audio)
+    fftResult[512] = std::complex<double>(10000.0, 0.0);  // Un "picco" a una frequenza specifica
+
+    // Frequenza da filtrare (esempio, 1000 Hz) e larghezza di banda (esempio, 50 Hz)
+    double targetFreq = 1000.0;
+    double bandwidth = 50.0;
+
+    // Applicare il filtro passa banda
+    applyBandpassFilterSIMD(fftResult, targetFreq, bandwidth);
+
+    // Stampare i valori filtrati per vedere il risultato
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        std::cout << fftResult[i] << std::endl;
+    }
+
+    return 0;
+}
+*/
+ ----------------------------------------------------------------------------------------------------
+ /*
+ #include <vector>
+#include <iostream>
+
+#define SAMPLE_RATE 44100  // Frequenza di campionamento (Hz)
+#define NUM_SAMPLES 1024   // Numero di campioni del segnale
+
+// Funzione per applicare un filtro passa basso (rimuovere alte frequenze) in modo sequenziale
+void applyLowPassFilterSequential(std::vector<int16_t>& audioSignal, double targetFreq, double bandwidth) {
+    int N = audioSignal.size();
+    double freqResolution = SAMPLE_RATE / N;
+
+    // Frequenza massima per cui vogliamo mantenere i campioni
+    int maxFreqIndex = (int)(targetFreq / freqResolution);
+
+    // Filtro passa basso: manteniamo i campioni fino alla frequenza target, gli altri diventano zero
+    for (int i = 0; i < N; ++i) {
+        // Calcola la frequenza corrispondente all'indice del campione
+        int currentFreqIndex = i;
+
+        // Se la frequenza è più alta della frequenza target, mettiamo il campione a zero
+        if (currentFreqIndex > maxFreqIndex) {
+            audioSignal[i] = 0;  // Impostiamo a zero il campione fuori dalla banda
+        }
+    }
+}
+
+int main() {
+    // Esempio di segnale audio (simulato con un array di 1024 campioni)
+    std::vector<int16_t> audioSignal(NUM_SAMPLES);
+
+    // Riempie il segnale con un valore di esempio (simulazione di un segnale audio)
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        audioSignal[i] = (i % 100) * 10;  // Simula alcuni valori di segnale
+    }
+
+    // Frequenza da filtrare (esempio, 1000 Hz) e larghezza di banda (esempio, 50 Hz)
+    double targetFreq = 1000.0;
+    double bandwidth = 50.0;
+
+    // Applicare il filtro passa basso sequenziale
+    applyLowPassFilterSequential(audioSignal, targetFreq, bandwidth);
+
+    // Stampare i campioni filtrati
+    std::cout << "Campioni filtrati (sequenziale):\n";
+    for (int i = 0; i < NUM_SAMPLES; ++i) {
+        std::cout << audioSignal[i] << " ";
+        if ((i + 1) % 8 == 0) {  // Stampa ogni 8 valori per riga
+            std::cout << "\n";
+        }
+    }
+
+    return 0;
+}
+*/
