@@ -15,11 +15,20 @@ There are two libraries required:
 - libsndfile1-dev for treating audio files.
 
 To install these libraires:
-``` sudo apt install libsndfile1-dev ```
-``` sudo apt install libfftw3 ```
+``` 
+  sudo apt install libsndfile1-dev
+```
+
+``` 
+  sudo apt install libfftw3
+```
 
 To compile, you can choose different levels of optimization, in order: {`-O0`, `-O1`, `-O2`, `-O3`}. We also need to specify with `-msse2` to compile with optimization for SIMD. We also specify the two libraires installed previously (example with the bpf):
-``` g++ -o bpf bpf.cpp -lfftw3 -lsndfile -msse2 -O3 ```
+``` 
+  g++ -o bpf bpf.cpp -lfftw3 -lsndfile -msse2 -O3
+```
 
 To run, we just specify the cutoff frequency as parameter (only for the bpf we specify two numbers, the lower freq. and the upper one):
-``` ./bpf 300 3000 ```
+``` 
+./bpf 300 3000
+```
