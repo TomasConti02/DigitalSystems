@@ -1,3 +1,4 @@
+////g++ -o LPF lpf.cpp -lsndfile -lfftw3 -lm
 #include <iostream>
 #include <vector>
 #include <cmath>
