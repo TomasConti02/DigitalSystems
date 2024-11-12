@@ -1,4 +1,6 @@
 ////g++ -o LPF lpf.cpp -lsndfile -lfftw3 -lm
+//ottimizzato: 
+//g++ -o scalarLPF Music.cpp -lsndfile -lfftw3 -lm -O1 
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -29,8 +31,8 @@ u_int64_t applyLowPassFilterFFTParallel(double* real, double* imag, int numSampl
     __m128d zero_register = _mm_setzero_pd();
     u_int64_t clock_counter_start = __rdtsc();
     for (int i = cutoffIndex; i < numSamples / 2; ++i) {
-        _mm_storeu_pd(&real[2 * i], zero_register);  // Azzera 2 valori reali
-        _mm_storeu_pd(&imag[2 * i], zero_register);  // Azzera 2 valori immaginari
+        _mm_store_pd(&real[2 * i], zero_register);  // Azzera 2 valori reali
+        _mm_store_pd(&imag[2 * i], zero_register);  // Azzera 2 valori immaginari
     }
 
     u_int64_t clock_counter_end = __rdtsc();
