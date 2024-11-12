@@ -67,10 +67,12 @@ u_int64_t sommaSequenziale(uint8_t* data, int length, uint32_t* risultato) {
 int main() {
     uint8_t data[VECTOR_LENGTH];
     for (int i = 0; i < VECTOR_LENGTH; ++i) {
-        data[i] = 255;  // Riempie l'array con valori ripetuti (0-255)
+        data[i] = 255;  // Riempie l'array con valori ripetuti (255)
     }
 
-    for (int iterazione = 0; iterazione < 10; ++iterazione) {
+    double totaleSpeedup = 0.0;  // Variabile per accumulare il totale degli speedup
+
+    for (int iterazione = 0; iterazione < 20; ++iterazione) {
         uint32_t risultatoSSE = 0;
         uint32_t risultatoSeq = 0;
 
@@ -79,6 +81,8 @@ int main() {
 
         if (risultatoSSE == risultatoSeq) {
             double speedup = static_cast<double>(tempoSeq) / tempoSSE;
+            totaleSpeedup += speedup;  // Aggiungi lo speedup alla somma totale
+
             std::cout << "Iterazione " << iterazione + 1 << ":\n";
             std::cout << "  Risultati uguali.\n";
             std::cout << "  Tempo SSE: " << tempoSSE << " cicli di clock\n";
@@ -93,7 +97,11 @@ int main() {
         }
     }
 
+    // Calcola e stampa la media dello speedup
+    double mediaSpeedup = totaleSpeedup / 20.0;
+    std::cout << "Media dello Speed-up: " << mediaSpeedup << "\n";
+    logFile << "Media dello Speed-up: " << mediaSpeedup << "\n";
+
     logFile.close();
     return 0;
 }
-
