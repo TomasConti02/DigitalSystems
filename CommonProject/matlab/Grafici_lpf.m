@@ -25,10 +25,25 @@ grid on;
 x = SpeedUp.VarName1; % colonna degli indici per SpeedUp
 y = SpeedUp.VarName2; % colonna dei valori di speedup
 
+% Calcola la media dei valori di speedup
+mean_y = mean(y);
+
 % Crea il grafico dello Speedup
 figure;
 plot(x, y, '-o'); % '-o' per linee con marker sui punti
+hold on;
+
+% Disegna la linea della media
+yline(mean_y, '--r', 'Average', 'LabelHorizontalAlignment', 'left', 'LabelVerticalAlignment', 'bottom');
+
+% Disegna la linea a y=1
+yline(1, '--k', 'y=1', 'LabelHorizontalAlignment', 'left', 'LabelVerticalAlignment', 'bottom');
+
+% Imposta i dettagli del grafico
 xlabel('Index of execution test');
 ylabel('Speedup');
 title('Speedup of Code Execution');
 grid on;
+ylim([0, max(y)*1.1]); % Imposta il limite inferiore dell'asse y a 0 e superiore leggermente sopra il massimo valore di y
+
+hold off;
