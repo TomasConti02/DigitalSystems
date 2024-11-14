@@ -211,3 +211,29 @@ plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 plt.legend()
 plt.show()
+'''
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+datagen = ImageDataGenerator(
+    rotation_range=20,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+
+# Applica l'augmentation durante il training
+train_generator = datagen.flow(x_train, y_train, batch_size=32)
+history = model.fit(
+    train_generator,
+    epochs=100,
+    validation_data=(x_val, y_val),
+    steps_per_epoch=len(x_train) // 32
+)
+Modifica Dropout e Batch Normalization
+Aumenta il dropout a 0.3 o 0.4 nei blocchi convoluzionali per rendere il modello più robusto.
+Sposta BatchNormalization prima dell'attivazione relu nei livelli convoluzionali per normalizzare i dati di input nei livelli.
+Se hai abbastanza memoria, puoi aumentare la risoluzione delle immagini a 150x150 o 224x224 per fornire al modello più dettagli.
+'''
