@@ -9,7 +9,7 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 - **hpf.cpp**: High-Pass Filter implemented like lpf.cpp.
 - **bpf.cpp**: Band-Pass Filter implemented like lpf.cpp and hpf.cpp.
 ### Other: ###
-- **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo.
+- **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo and free to use.
 - **matlab/**: matlab folder with code used for graphs.
 - **test/**: this folder contains some scripts to test the code.
 
