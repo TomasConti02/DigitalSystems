@@ -1,4 +1,6 @@
 /*
+    g++ -o ParallelEQ ParallelEQ.cpp -lsndfile -lfftw3 -lm -mavx512f
+
     This equalizer divides the frequency spectrum into three bands, and for each one applies a gain:
 
     [0 Hz - 300 Hz]     [300 Hz - 3000 Hz]     [3000 Hz - 22 kHz]
@@ -12,8 +14,10 @@
 #include <cmath>
 #include <sndfile.h>
 #include <fftw3.h>
+#include <fstream>
+#include <cstdlib>
+#include <cstring>
 #include <immintrin.h>
-#include <emmintrin.h>
 void print_m128d(__m128d reg, const std::string& label = "") {
     alignas(16) double values[2]; // Array allineato per la compatibilità SIMD
     _mm_storeu_pd(values, reg);   // Carica i valori dal registro nell'array
@@ -23,8 +27,10 @@ void print_m128d(__m128d reg, const std::string& label = "") {
     }
     std::cout << "[" << values[1] << ", " << values[0] << "]" << std::endl; // Stampa in ordine umano
 }
+
 #define SAMPLE_RATE 44100  // Sample rate (Hz)
 // function to apply the equalization
+/*
 void applyParallelEqualizer(double* real, double* imag, int numSamples, int sampleRate) {
     u_int64_t clock_counter_start = __rdtsc();
     int lowBandEnd = static_cast<int>(300 / (static_cast<double>(sampleRate) / numSamples)); // up to 300 Hz
@@ -59,7 +65,89 @@ void applyParallelEqualizer(double* real, double* imag, int numSamples, int samp
 
     printf("Time: %li\n", clock_counter_end - clock_counter_start);
 }
+*/
+/*
+void applyParallelEqualizer(double* real, double* imag, int numSamples, int sampleRate) {
+    u_int64_t clock_counter_start = __rdtsc();
 
+    int lowBandEnd = static_cast<int>(300 / (static_cast<double>(sampleRate) / numSamples)); // up to 300 Hz
+    int midBandStart = lowBandEnd;
+    int midBandEnd = static_cast<int>(3000 / (static_cast<double>(sampleRate) / numSamples)); // from 300 to 3000 Hz
+    int highBandStart = midBandEnd;
+
+    // Gains
+    __m256d lowGain = _mm256_set1_pd(std::pow(10, -6.0 / 20.0));  // -6 dB
+    __m256d midGain = _mm256_set1_pd(std::pow(10, 2.0 / 20.0));   // +2 dB
+    __m256d highGain = _mm256_set1_pd(std::pow(10, -3.0 / 20.0)); // -3 dB
+
+    // Low band
+    for (int i = 0; i < lowBandEnd; i += 4) {
+        __m256d realVals = _mm256_load_pd(&real[i]);
+        __m256d imagVals = _mm256_load_pd(&imag[i]);
+        _mm256_store_pd(&real[i], _mm256_mul_pd(lowGain, realVals));
+        _mm256_store_pd(&imag[i], _mm256_mul_pd(lowGain, imagVals));
+    }
+
+    // Mid band
+    for (int i = midBandStart / 4; i < midBandEnd / 4; ++i) {
+        __m256d realVals = _mm256_load_pd(&real[4 * i]);
+        __m256d imagVals = _mm256_load_pd(&imag[4 * i]);
+        _mm256_store_pd(&real[4 * i], _mm256_mul_pd(midGain, realVals));
+        _mm256_store_pd(&imag[4 * i], _mm256_mul_pd(midGain, imagVals));
+    }
+
+    // High band
+    for (int i = highBandStart / 4; i < numSamples / 4; ++i) {
+        __m256d realVals = _mm256_load_pd(&real[4 * i]);
+        __m256d imagVals = _mm256_load_pd(&imag[4 * i]);
+        _mm256_store_pd(&real[4 * i], _mm256_mul_pd(highGain, realVals));
+        _mm256_store_pd(&imag[4 * i], _mm256_mul_pd(highGain, imagVals));
+    }
+
+    u_int64_t clock_counter_end = __rdtsc();
+    printf("Time: %li\n", clock_counter_end - clock_counter_start);
+}
+*/
+void applyParallelEqualizer(double* real, double* imag, int numSamples, int sampleRate) {
+    u_int64_t clock_counter_start = __rdtsc();
+
+    int lowBandEnd = static_cast<int>(300 / (static_cast<double>(sampleRate) / numSamples)); // up to 300 Hz
+    int midBandStart = lowBandEnd;
+    int midBandEnd = static_cast<int>(3000 / (static_cast<double>(sampleRate) / numSamples)); // from 300 to 3000 Hz
+    int highBandStart = midBandEnd;
+
+    // Gains
+    __m512d lowGain = _mm512_set1_pd(std::pow(10, -6.0 / 20.0));  // -6 dB
+    __m512d midGain = _mm512_set1_pd(std::pow(10, 2.0 / 20.0));   // +2 dB
+    __m512d highGain = _mm512_set1_pd(std::pow(10, -3.0 / 20.0)); // -3 dB
+
+    // Low band
+    for (int i = 0; i < lowBandEnd; i += 8) {  // 8 double per ciclo
+        __m512d realVals = _mm512_load_pd(&real[i]);
+        __m512d imagVals = _mm512_load_pd(&imag[i]);
+        _mm512_store_pd(&real[i], _mm512_mul_pd(lowGain, realVals));
+        _mm512_store_pd(&imag[i], _mm512_mul_pd(lowGain, imagVals));
+    }
+
+    // Mid band
+    for (int i = midBandStart / 8; i < midBandEnd / 8; ++i) {
+        __m512d realVals = _mm512_load_pd(&real[8 * i]);
+        __m512d imagVals = _mm512_load_pd(&imag[8 * i]);
+        _mm512_store_pd(&real[8 * i], _mm512_mul_pd(midGain, realVals));
+        _mm512_store_pd(&imag[8 * i], _mm512_mul_pd(midGain, imagVals));
+    }
+
+    // High band
+    for (int i = highBandStart / 8; i < numSamples / 8; ++i) {
+        __m512d realVals = _mm512_load_pd(&real[8 * i]);
+        __m512d imagVals = _mm512_load_pd(&imag[8 * i]);
+        _mm512_store_pd(&real[8 * i], _mm512_mul_pd(highGain, realVals));
+        _mm512_store_pd(&imag[8 * i], _mm512_mul_pd(highGain, imagVals));
+    }
+
+    u_int64_t clock_counter_end = __rdtsc();
+    printf("Time: %li\n", clock_counter_end - clock_counter_start);
+}
 int main(int argc, char* argv[]) {
     const char* inputFile = "/home/tomas/Desktop/fullSong1.wav";
     const char* outputFile = "/home/tomas/Desktop/TOMASfullSongParallel1EQ.wav";
@@ -72,8 +160,14 @@ int main(int argc, char* argv[]) {
     }
 
     int numSamples = sfInfo.frames * sfInfo.channels;
-    std::vector<double> real(numSamples);
-    std::vector<double> imag(numSamples, 0.0);
+  /*
+    double* real = (double*)std::aligned_alloc(16, sizeof(double) * numSamples);
+    double* imag = (double*)std::aligned_alloc(16, sizeof(double) * numSamples);
+    double* real = (double*)std::aligned_alloc(32, sizeof(double) * numSamples);
+    double* imag = (double*)std::aligned_alloc(32, sizeof(double) * numSamples);
+    */
+    double* real = (double*)std::aligned_alloc(64, sizeof(double) * numSamples);
+    double* imag = (double*)std::aligned_alloc(64, sizeof(double) * numSamples);
     std::vector<short> buffer(numSamples);
 
     sf_read_short(inFile, buffer.data(), numSamples);
@@ -82,12 +176,12 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < numSamples; ++i) {
         real[i] = static_cast<double>(buffer[i]);
     }
-
+    std::memset(imag, 0, sizeof(double) * numSamples);
     // FFT & IFFT
     fftw_complex* fftData = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * numSamples);
     fftw_complex* ifftData = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * numSamples);
-    fftw_plan forwardPlan = fftw_plan_dft_r2c_1d(numSamples, real.data(), fftData, FFTW_ESTIMATE);
-    fftw_plan inversePlan = fftw_plan_dft_c2r_1d(numSamples, fftData, real.data(), FFTW_ESTIMATE);
+    fftw_plan forwardPlan = fftw_plan_dft_r2c_1d(numSamples, real, fftData, FFTW_ESTIMATE);
+    fftw_plan inversePlan = fftw_plan_dft_c2r_1d(numSamples, fftData, real, FFTW_ESTIMATE);
 
     // FFT
     fftw_execute(forwardPlan);
@@ -99,7 +193,7 @@ int main(int argc, char* argv[]) {
     }
 
     // applies EQ
-    applyParallelEqualizer(real.data(), imag.data(), numSamples / 2, SAMPLE_RATE);
+    applyParallelEqualizer(real, imag, numSamples / 2, SAMPLE_RATE);
 
     // copy data to prepare the Inverse FFT
     for (int i = 0; i < numSamples / 2 + 1; ++i) {
