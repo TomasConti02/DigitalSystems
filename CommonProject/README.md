@@ -14,7 +14,7 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 
 ## How to run? ##
 There are two libraries required:
-- libfftw3 for the Fast Fourier Transform: we have to treat frequencies, so for every little frame we need to know its spectrum, to obtain frequencies we tranform every piece of audio in a complex number.
+- libfftw3 for the Fast Fourier Transform: we have to treat frequencies, so for every little frame we need to know its spectrum, to obtain frequencies we tranform every piece of audio in a complex number. ***Warning***: to deal with float numbers instead of double, use `-lfftw3f` when compiling.
 - libsndfile1-dev for treating audio files.
 
 To install these libraires:
