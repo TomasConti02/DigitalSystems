@@ -1,5 +1,5 @@
 /*
-    g++ -o ParallelEQ ParallelEQ.cpp -lsndfile -lfftw3 -lm -mavx512f
+    g++ -o ParallelEQ ParallelEQ.cpp -lsndfile -lfftw3f -msse2
 
     This equalizer divides the frequency spectrum into three bands, and for each one applies a gain:
 
