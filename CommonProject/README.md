@@ -3,15 +3,14 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 
 ## Content of this folder ##
 ### Source code: ###
-- **scalarLPF.cpp**: a program that takes a .wav file and applies a Low-Pass Filter, the result is stored in a new file.
 - **scalarEQ.cpp**: a program that takes a .wav file and applies a pre-defined equalization, the result is stored in a new file.
-- **lpf.cpp**: a Low-Pass Filter implemented in scalar mode (like scalarLPF.cpp) and also in parallel with SSE2 intrinsics. Prints on output the speedup (scalar function time / parallel function time).
-- **hpf.cpp**: High-Pass Filter implemented like lpf.cpp.
-- **bpf.cpp**: Band-Pass Filter implemented like lpf.cpp and hpf.cpp.
+- **parallelEQ.cpp** : an equalizer in SIMD with double precision numbers.
+- **parallelEQFloat.cpp** : an equalizer in SIMD with float precision numbers.
+- **filters**: low-pass, high-pass and band-pass filters in c++.
 ### Other: ###
 - **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo and free to use.
 - **matlab/**: matlab folder with code used for graphs.
-- **test/**: this folder contains some scripts to test the code.
+- **test/**: this folder contains some scripts to test the code in different optimization levels.
 
 ## How to run? ##
 There are two libraries required:
