@@ -6,13 +6,15 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 - **scalarEQ.cpp**: a program that takes a .wav file and applies a pre-defined equalization, the result is stored in a new file.
 - **parallelEQ.cpp** : an equalizer in SIMD with double precision numbers.
 - **parallelEQFloat.cpp** : an equalizer in SIMD with float precision numbers.
-- **filters**: low-pass, high-pass and band-pass filters in c++.
+- **iir.cpp**: this is an equalizer implemented with an IIR filter. This file does not need the Fourier Transform and is much faster.
+- **filters/**: low-pass, high-pass and band-pass filters in c++.
 ### Other: ###
 - **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo and free to use.
 - **matlab/**: matlab folder with code used for graphs.
 - **test/**: this folder contains some scripts to test the code in different optimization levels.
 
 ## How to run? ##
+At the moment, only `iir.cpp` does not need the following libraries.
 There are two libraries required:
 - libfftw3 for the Fast Fourier Transform: we have to treat frequencies, so for every little frame we need to know its spectrum, to obtain frequencies we tranform every piece of audio in a complex number. ***Warning***: to deal with float numbers instead of double, use `-lfftw3f` when compiling.
 - libsndfile1-dev for treating audio files.
