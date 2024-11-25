@@ -6,17 +6,18 @@
 #include <immintrin.h>
 #include <cstdlib>
 #include <cmath>
+#include <time.h>
 
 #define FIXED_POINT_SCALE 16
 #define SCALE_FACTOR 65536
 
-const float LOW_GAIN = -6.0;
+const float LOW_GAIN = -60.0;
 const float MID_GAIN = -2.0;
 const float HIGH_GAIN = -8.0;
-
 const double PI = 3.14159265358979323846;
 
-/*
+/*  DESCRIPTION:
+
     3 bands Equalizer implemented with IIR filter.
 
     compile: 
@@ -25,6 +26,11 @@ const double PI = 3.14159265358979323846;
     run:
         ./iir
 */
+
+int32_t gainScale(float gain){
+    float pot = pow(10.0f, gain / 20.0f);
+    return SCALE_FACTOR * pot;
+}
 
 // reads wav aligned
 std::vector<int16_t> readWAV(const std::string& filename, int& sampleRate, int& numChannels) {
@@ -85,19 +91,7 @@ void writeWAV(const std::string& filename, const std::vector<int16_t>& samples, 
     file.write(reinterpret_cast<const char*>(samples.data()), dataSize);
 }
 
-void print_m128i_16bit(__m128i vec) {
-    printf("[%d] - ", _mm_extract_epi16(vec, 0));
-    printf("[%d] - ", _mm_extract_epi16(vec, 1));
-    printf("[%d] - ", _mm_extract_epi16(vec, 2));
-    printf("[%d] - ", _mm_extract_epi16(vec, 3));
-    printf("[%d] - ", _mm_extract_epi16(vec, 4));
-    printf("[%d] - ", _mm_extract_epi16(vec, 5));
-    printf("[%d] - ", _mm_extract_epi16(vec, 6));
-    printf("[%d] ", _mm_extract_epi16(vec, 7));
-    std::cout << std::endl;
-}
-
-// applies eq for a single 16-bit sample
+// applies eq for a single sample
 void applyIIRFilterInt16SIMD(__m128i* input, __m128i* output, int numSamples, __m128i* b, __m128i* a, __m128i* z) {
     for (int i = 0; i < numSamples / 4; ++i) {
         // Load input samples and convert to 32-bit
@@ -130,17 +124,6 @@ void applyIIRFilterInt16SIMD(__m128i* input, __m128i* output, int numSamples, __
     }
 }
 
-// align vector
-std::vector<int16_t> createAlignedVector(size_t size) {
-    // alloc of aligned array
-    void* ptr = nullptr;
-    if (posix_memalign(&ptr, 16, size * sizeof(int16_t)) != 0) {
-        throw std::runtime_error("Memory allocation failed");
-    }
-
-    return std::vector<int16_t>(reinterpret_cast<int16_t*>(ptr), reinterpret_cast<int16_t*>(ptr) + size);
-}
-
 // Sequential IIR filter
 int16_t applyIIRFilterInt16Sequential(int16_t sample, int32_t* b, int32_t* a, int32_t* z) {
     int32_t input = static_cast<int32_t>(sample);
@@ -157,13 +140,6 @@ int16_t applyIIRFilterInt16Sequential(int16_t sample, int32_t* b, int32_t* a, in
     z[0] = (b[1] * input - a[1] * output + z[1]) >> FIXED_POINT_SCALE;
     z[1] = (b[2] * input - a[2] * output) >> FIXED_POINT_SCALE;
     return static_cast<int16_t>(std::min(std::max(output, -32768), 32767)); // Clamping
-}
-
-int32_t gainScale(float gain){
-    float uno = gain / 20.0f;
-    float due = 10.0f;
-    float pot = pow(due,uno);
-    return SCALE_FACTOR * pot;
 }
 
 // Sequential equalizer function
@@ -202,17 +178,9 @@ uint64_t applyEqualizerSequential(std::vector<int16_t>& samples) {
     return __rdtsc() - start;
 }
 
-
-
 // SIMD equalizer function (SSE2)
 uint64_t applyEqualizerSIMD(std::vector<int16_t>& samples) {
     uint64_t start = __rdtsc();
-
-    // Applicare un pre-gain per prevenire il clipping
-    const float preGainDb = -6.0f; // Riduzione di 6dB per prevenire il clipping
-    const float preGainFactor = pow(10.0f, preGainDb / 20.0f);
-    const int32_t preGainFixed = static_cast<int32_t>(preGainFactor * SCALE_FACTOR);
-    __m128i preGain = _mm_set1_epi32(preGainFixed);
 
     // Gains (scaled con pre-gain)
     __m128i lowGain = _mm_set1_epi32(gainScale(LOW_GAIN));
@@ -236,9 +204,6 @@ uint64_t applyEqualizerSIMD(std::vector<int16_t>& samples) {
     for (size_t i = 0; i < samples.size(); i += 4) {
         // Convert 16-bit samples to 32-bit
         __m128i samples32 = _mm_cvtepi16_epi32(_mm_loadl_epi64((__m128i*)&samples[i]));
-
-        // Apply pre-gain
-        samples32 = _mm_srai_epi32(_mm_mullo_epi32(samples32, preGain), FIXED_POINT_SCALE);
 
         // Process each band
         __m128i low32, mid32, high32;
@@ -279,60 +244,30 @@ uint64_t applyEqualizerSIMD(std::vector<int16_t>& samples) {
         _mm_storel_epi64((__m128i*)&samples[i], result);
     }
 
-    // Handle remaining samples sequentially with the same anti-clipping logic
-    for (size_t i = (samples.size() / 4) * 4; i < samples.size(); ++i) {
-        int32_t sample = static_cast<int32_t>(samples[i]);
-        
-        // Apply pre-gain
-        sample = (sample * preGainFixed) >> FIXED_POINT_SCALE;
-        
-        // Process each band
-        int32_t low = applyIIRFilterInt16Sequential(sample, reinterpret_cast<int32_t*>(bLow), 
-                                                   reinterpret_cast<int32_t*>(aLow), reinterpret_cast<int32_t*>(zLow));
-        int32_t mid = applyIIRFilterInt16Sequential(sample, reinterpret_cast<int32_t*>(bMid), 
-                                                   reinterpret_cast<int32_t*>(aMid), reinterpret_cast<int32_t*>(zMid));
-        int32_t high = applyIIRFilterInt16Sequential(sample, reinterpret_cast<int32_t*>(bHigh), 
-                                                    reinterpret_cast<int32_t*>(aHigh), reinterpret_cast<int32_t*>(zHigh));
-
-        // Apply gains and combine with soft clipping
-        int32_t combined = ((low * gainScale(LOW_GAIN)) >> FIXED_POINT_SCALE) +
-                          ((mid * gainScale(MID_GAIN)) >> FIXED_POINT_SCALE) +
-                          ((high * gainScale(HIGH_GAIN)) >> FIXED_POINT_SCALE);
-
-        // Soft clipping
-        if (combined > 24576) {
-            combined -= (combined - 24576) >> 2;
-        } else if (combined < -24576) {
-            combined -= (combined + 24576) >> 2;
-        }
-
-        // Final clamp to 16-bit
-        samples[i] = static_cast<int16_t>(std::min(std::max(combined, -32768), 32767));
-    }
-
-    return __rdtsc() - start;
+    uint64_t end = __rdtsc();
+    return end - start;
 }
 
+
 int main() {
-    try {
-        int sampleRate, numChannels;
-        std::vector<int16_t> samples = readWAV("./samples/fullSong.wav", sampleRate, numChannels);
+    clock_t start;
+    start = clock();
 
-        std::vector<int16_t> samplesSIMD = samples;
-        // sequential
-        uint64_t timeSequential = applyEqualizerSequential(samples);
-        std::cout << "\tSequential Time: " << timeSequential << " ticks";
+    int sampleRate, numChannels;
+    std::vector<int16_t> samples = readWAV("./samples/fullSong.wav", sampleRate, numChannels);
 
+    std::vector<int16_t> samplesSIMD = samples;
+    // sequential
+    uint64_t timeSequential = applyEqualizerSequential(samples);
 
-        // parallel
-        uint64_t timeSIMD = applyEqualizerSIMD(samplesSIMD);
-        writeWAV("./samples/fullSongIIR.wav", samplesSIMD, sampleRate, numChannels);
-        std::cout << "\tSIMD Time: " << timeSIMD << " ticks" << std::endl;
+    // parallel
+    uint64_t timeSIMD = applyEqualizerSIMD(samplesSIMD);
 
-        std::cout << "\n\tSPEEDUP " << (float)timeSequential / (float)timeSIMD << "\n" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-    }
+    writeWAV("./samples/fullSongIIR.wav", samplesSIMD, sampleRate, numChannels);
+
+    printf("\tElapsed time: %.3fs", (float) (clock() - start) / CLOCKS_PER_SEC);
+    std::cout << "\tSPEEDUP " << (float)timeSequential / (float)timeSIMD << "\n" << std::endl;
+
 
     return 0;
 }
