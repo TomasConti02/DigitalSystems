@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     }
 
     int numSamples = sfInfo.frames * sfInfo.channels;
-    
+    //capire come allineare i dati rispeto ai singoli warp 
     float* real = (float*)std::aligned_alloc(64, sizeof(float) * numSamples);
     float* imag = (float*)std::aligned_alloc(64, sizeof(float) * numSamples);
     std::vector<short> buffer(numSamples);
