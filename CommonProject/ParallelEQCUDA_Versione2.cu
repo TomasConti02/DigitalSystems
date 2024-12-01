@@ -13,7 +13,7 @@
 // Costanti in memoria costante
 __constant__ float d_gains[3];  // [lowGain, midGain, highGain]
 __constant__ int d_bandLimits[2];  // [lowEnd, midEnd]
-
+//Testare il kernel senza l'uso di sincronizzazioni + testare il kernel variando BLOCK_SIZE
 __global__ void applyMultiBandGainKernel(float* real, float* imag, int numSamples) {
     __shared__ float shared_real[BLOCK_SIZE];
     __shared__ float shared_imag[BLOCK_SIZE];
