@@ -6,7 +6,7 @@ We use the SSE (Streaming SIMD Extensions) instruction set architecture for x86 
 SSE provides 128-bit registers, which allow for parallel processing of multiple data elements, such as four 32-bit floating-point numbers.
 When creating our data structures, we need to ensure that their memory addresses are aligned to 16 bytes, matching the register size. 
 This alignment allows us to read an entire register's worth of data in a single CPU cycle.
-by chatgpt
+
 ```
 Memory Layout (Each block is 16 bytes):
 |--------------|--------------|--------------|--------------|
