@@ -4,9 +4,9 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 ## Content of this folder ##
 ### Source code: ###
 - **scalarEQ.cpp**: a program that takes a .wav file and applies a pre-defined equalization, the result is stored in a new file.
-- **parallelEQ.cpp** : an equalizer in SIMD with double precision numbers.
-- **parallelEQFloat.cpp** : an equalizer in SIMD with float precision numbers.
+- **parallelEQ.cpp** : an equalizer in SIMD with float precision numbers.
 - **iir.cpp**: this is an equalizer implemented with an IIR filter. This file does not need the Fourier Transform and is much faster.
+- **cudaEQ.cu**: EQ implemented in CUDA. One kernel for each sample.
 - **filters/**: low-pass, high-pass and band-pass filters in c++.
 ### Other: ###
 - **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo and free to use.
@@ -38,3 +38,9 @@ To run, we just specify the cutoff frequency as parameter (only for the bpf we s
 ``` 
 ./bpf 300 3000
 ```
+
+As specified before, ```iir.cpp``` does not need the libraries, to compile use the following command:
+```
+g++ iir.cpp -o iir -march=native
+```
+Optionally, you can add the optimization level.
