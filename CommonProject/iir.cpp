@@ -258,7 +258,7 @@ int main() {
     // Process samples
     uint64_t timeSequential = applyEqualizerSequential(samplesSequential, numSamples);
     uint64_t timeSIMD = applyEqualizerSIMD(samples, numSamples);
-    writeWAV("./samples/fullSongIIR.wav", samples, numSamples, sampleRate, numChannels); 
+    writeWAV("./samples/fullSongIIR.wav", samplesSequential, numSamples, sampleRate, numChannels); 
     printf("\tElapsed time: %.3fs", (float) (clock() - start) / CLOCKS_PER_SEC);
     std::cout << "\tSPEEDUP " << (float)timeSequential / (float)timeSIMD << "\n" << std::endl;
     // Free aligned memory
