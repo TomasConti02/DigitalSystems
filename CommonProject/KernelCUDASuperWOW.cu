@@ -1,3 +1,7 @@
+//sudo apt update
+//!sudo apt install libfftw3-dev
+//!nvcc -o CudaEQ prova.cu -lsndfile -lfftw3f -lcufft
+//!ncu --kernel-name applyMultiBandGainKernelOptimized ./CudaEQ
 #include <iostream>
 #include <vector>
 #include <cmath>
