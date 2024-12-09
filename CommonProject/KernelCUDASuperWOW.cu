@@ -51,7 +51,7 @@ __global__ void applyMultiBandGainKernelOptimized(float* __restrict__ real, floa
             sharedImag[tid + i * blockDim.x] *= gain;
         }
     }
-    __syncthreads();
+    //__syncthreads(); non necessariamente necessante 
 
     // Scrittura nella memoria globale
     for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
