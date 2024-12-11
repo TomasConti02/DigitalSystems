@@ -2,6 +2,8 @@
 //!sudo apt install libfftw3-dev
 //!nvcc -o CudaEQ prova.cu -lsndfile -lfftw3f -lcufft
 //!ncu --kernel-name applyMultiBandGainKernelOptimized ./CudaEQ
+/*size_t size = ((n * sizeof(float) + 511) / 512) * 512;
+cudaMalloc(&d_data, size);*/
 #include <iostream>
 #include <vector>
 #include <cmath>
