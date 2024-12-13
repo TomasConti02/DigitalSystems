@@ -3,7 +3,13 @@
 //!nvcc -o CudaEQ prova.cu -lsndfile -lfftw3f -lcufft
 //!ncu --kernel-name applyMultiBandGainKernelOptimized ./CudaEQ
 /*size_t size = ((n * sizeof(float) + 511) / 512) * 512;
-cudaMalloc(&d_data, size);*/
+cudaMalloc(&d_data, size);
+48 KB Shared Memory + 16 KB L1 Cache
+32 KB Shared Memory + 32 KB L1 Cache
+16 KB Shared Memory + 48 KB L1 Cache
+64 KB di memoria condivisa (Shared Memory) per ogni Streaming Multiprocessor (SM)
+48 KB (kilobyte) equivalgono a 49.152 byte.
+*/
 #include <iostream>
 #include <vector>
 #include <cmath>
