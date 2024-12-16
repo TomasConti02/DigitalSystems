@@ -35,9 +35,8 @@ So we have three IIR filter: the first selects the low frequencies, the second f
 \
 
 ![Filtro IIR](https://latex.codecogs.com/png.latex?\bg_white\color{Black}y%5Bn%5D%20%3D%20%5Cfrac%7Bb_0%20x%5Bn%5D%20%2B%20b_1%20x%5Bn-1%5D%20%2B%20b_2%20x%5Bn-2%5D%7D%7B1%20%2B%20a_1%20y%5Bn-1%5D%20%2B%20a_2%20y%5Bn-2%5D%7D)
-
 \
-Where x is the input sample, y the filtered output and a,b,z the coefficients.
+Where `x(n)` is the input sample, `y(n)` the filtered output and `a`,`b`,`z` the coefficients.
 
 In scalar mode, the code is:
 ```
