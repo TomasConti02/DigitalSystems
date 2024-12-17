@@ -23,9 +23,19 @@ Register splitting occurs if exceeding hardware limits, where they can be automa
 Fast memory, shared by every thread of a block.  
 Each SM has an on-chip memory limitation of 48-228 KB, shared between Shared memory and L1 Cache. It is organized inside memory banks and can be problematic if each thread needs the same bank memory, as in this case the access is serialized (very bad).  
 After the initialization of shared memory, we need a `__syncthreads` command to sync every thread of the block before they try to access the data (bad for seed).
+We use the __shared__ qualifier.
 
 **CONSTANT**  
 Read-only memory off-chip, but a limited portion is on-chip for every SM, useful for high-read frequency data. Data can't change during execution.  
 Total size is limited to 64 KB, and the memory space is accessible by all threads in a kernel.
 
 **Global Memory**
+Largest, highest latency GPU memory it has a globale scope and lifetime(accessible by all thread in all SMs).
+We use the qualifier __device__ and host allocation by cusaMalloc with freed via cudaFree.
+it persists for whole execution of the application on GPU
+
+**GPU Cache: Structure and Operation**
+Normally the GPU cache onchip are not-programmable, the temporaly store portion of data for fast access.
+L1 Cache -> Fastest cache with one per SM, ensuring fast data access. Stores data from both local and global memory, including data that doesn't fit in registers (register spills).
+L2 Cache -> Single and shared between SMs. Acts as bridge between faster L1 caches and slower main memory. Stores data from both local and global memory, including data from register spills. Not programmable.
+L2 Cache ->Single and shared between SMs. Acts as bridge between faster L1 caches and slower main memory. Stores data from both local and global memory, including data from register spills
