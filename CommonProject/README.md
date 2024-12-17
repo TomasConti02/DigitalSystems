@@ -29,13 +29,35 @@ We use the __shared__ qualifier.
 Read-only memory off-chip, but a limited portion is on-chip for every SM, useful for high-read frequency data. Data can't change during execution.  
 Total size is limited to 64 KB, and the memory space is accessible by all threads in a kernel.
 
-**Global Memory**
-Largest, highest latency GPU memory it has a globale scope and lifetime(accessible by all thread in all SMs).
-We use the qualifier __device__ and host allocation by cusaMalloc with freed via cudaFree.
-it persists for whole execution of the application on GPU
+## GPU Memory Types
 
-**GPU Cache: Structure and Operation**
-Normally the GPU cache onchip are not-programmable, the temporaly store portion of data for fast access.
-L1 Cache -> Fastest cache with one per SM, ensuring fast data access. Stores data from both local and global memory, including data that doesn't fit in registers (register spills).
-L2 Cache -> Single and shared between SMs. Acts as bridge between faster L1 caches and slower main memory. Stores data from both local and global memory, including data from register spills. Not programmable.
-L2 Cache ->Single and shared between SMs. Acts as bridge between faster L1 caches and slower main memory. Stores data from both local and global memory, including data from register spills
+### **Global Memory**  
+The largest and highest-latency GPU memory.  
+- **Scope and Lifetime**: Global scope, accessible by all threads across all SMs.  
+- **Declaration**: Declared with the `__device__` qualifier.  
+- **Allocation**: Allocated on the host using `cudaMalloc` and freed with `cudaFree`.  
+- **Persistence**: Remains active for the entire execution of the application on the GPU.  
+
+---
+
+### **GPU Cache: Structure and Operation**  
+GPU caches are on-chip, non-programmable memory structures designed for fast data access.  
+
+#### **L1 Cache**  
+- The fastest cache, with one instance per SM.  
+- Ensures fast data access by storing data from both local and global memory.  
+- Includes data that doesn't fit in registers (register spills).  
+
+#### **L2 Cache**  
+- A single cache shared among all SMs.  
+- Acts as a bridge between the faster L1 caches and the slower global memory.  
+- Stores data from both local and global memory, including register spills.  
+- Non-programmable.  
+
+#### **Constant Cache (Read-Only, Per SM)**  
+- Present in each SM.  
+- Optimized for quick access to immutable data, such as lookup tables or constant parameters.  
+- Stores data that doesn't change during kernel execution.  
+
+---  
+
