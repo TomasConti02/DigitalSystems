@@ -14,8 +14,8 @@ SOURCE_FILE="$1"
 EXECUTABLE="${SOURCE_FILE%.cpp}"
 shift 
 COMPILE_OPTIONS="$@" # compile options
-cd ..
-LOG_FILE="./test/${EXECUTABLE}_runs.txt"
+cd ../simd
+LOG_FILE="../test/${EXECUTABLE}_runs.txt"
 NUM_RUNS=20
 
 # cleans log file
@@ -38,7 +38,7 @@ done
 
 echo "[OK] Results of runs saved in $LOG_FILE"
 
-cd ./test
+cd ../test
 
 FILE_NAME="${LOG_FILE#./test/}"
 
