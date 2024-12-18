@@ -10,6 +10,8 @@ This repo contains the project of Conti Tomas and Chergui Jacopo: an audio equal
 - **samples/**: this folder contains sounds used in tests. The format is with a sample rate of 44100 Hz and a bit depth of 16, which means that every second we have 44100 little pieces of audio, and every piece is represented by 16 bits. All of these sounds are produced by Chergui Jacopo and free to use.
 - **matlab/**: matlab folder with code used for graphs.
 - **test/**: this folder contains some scripts to test the code in different optimization levels.
+
+# General info
 ## What kind of memory on and off chip we are using in our kernel ? ##
 **DRAM**  
 Slowest memory off-chip, shared by every thread of GPU execution. We can call it "Local Memory". It has the same position as global memory. It has low bandwidth and high latency, it is private for each thread and not shared. Normally used for variables that can't fit in registers due to space limitations.  
