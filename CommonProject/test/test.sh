@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# for iir.cpp -> ./test.sh iir.cpp
+# for iir.cpp -> ./test.sh iir.cpp -march=native
 # for the others -> ./test.sh <filename>.cpp -lsndfile -fopenmp -lfftw3f
 
 if [ -z "$1" ]; then
@@ -26,7 +26,7 @@ for OPT_LEVEL in 0 1 2 3; do
     echo "Compiling in -O$OPT_LEVEL..." | tee -a $LOG_FILE
 
     # compiling
-    g++ -o $EXECUTABLE $SOURCE_FILE -O$OPT_LEVEL -march=native -msse2 $COMPILE_OPTIONS
+    g++ -o $EXECUTABLE $SOURCE_FILE -O$OPT_LEVEL $COMPILE_OPTIONS
 
     # execution
     for ((i = 1; i <= NUM_RUNS; i++)); do
