@@ -1,6 +1,6 @@
 ## GPU Datasheet ##
 we use Tesla T4 for testing our kernels.
-
+DRAM bandwidth -> 320GB/s
 ## What kind of memory on and off chip we are using in our kernel ? ##
 ## GPU Memory Types
 ### **DRAM**  
@@ -77,3 +77,8 @@ Because we manage very simple data transfers and do not have a large or complex 
 
 ---
 ### Global Memory Management
+Optimizing global memory use is crucial for kernel performance, without this optimization the kernel performance can be very bad.
+Instructions and memory operation are issued and executed per warps(32 thread). A single request is serviced by one(optimal case) or more memory trasferts.
+
+We shoud have an Aligned memory accesses and Coalesced memory accesses.
+For this reason we do a great use of index for every thread memory data access. 
