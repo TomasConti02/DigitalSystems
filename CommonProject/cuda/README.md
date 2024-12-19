@@ -46,7 +46,9 @@ GPU caches are on-chip, non-programmable memory structures designed for fast dat
 - Optimized for quick access to immutable data, such as lookup tables or constant parameters.  
 - Stores data that doesn't change during kernel execution.  
 ---
----  
+#### Data transfers**  
 Data transfers between the host and the device can represent a bottleneck because the memory bandwidth between GPU memory and GPU cores is significantly 
-higher compared to the PCIe bandwidth.
+higher compared to the PCIe bandwidth(bredge between CPU and GPU).
 To address this, it is important to minimize data transfers between the host and the device. Ideally, all data should be transferred to GPU memory only once.
+---
+
