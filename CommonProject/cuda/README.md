@@ -52,4 +52,7 @@ Data transfers between the host and the device can represent a bottleneck becaus
 higher compared to the PCIe bandwidth(bredge between CPU and GPU).
 To address this, it is important to minimize data transfers between the host and the device. Ideally, all data should be transferred to GPU memory only once.
 #### Pinned Memory in CUDA**  
-When there are huge data to manage and send to device we need to consider to use the pinned memory.
+When managing large amounts of data to send to the device, it is recommended to consider using pinned memory.
+By default, host-allocated memory is pageable (subject to page faults). Before transferring the data, it needs to be moved into pinned memory (not subject to page faults), and only then can the transfer take place.
+In our case, we do not use pinned memory because we are not transferring large amounts of data, only the data resulting from the FFT transformation.
+
