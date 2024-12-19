@@ -54,5 +54,26 @@ To address this, it is important to minimize data transfers between the host and
 #### Pinned Memory in CUDA**  
 When managing large amounts of data to send to the device, it is recommended to consider using pinned memory.
 By default, host-allocated memory is pageable (subject to page faults). Before transferring the data, it needs to be moved into pinned memory (not subject to page faults), and only then can the transfer take place.
-In our case, we do not use pinned memory because we are not transferring large amounts of data, only the data resulting from the FFT transformation.
+In our case, we use pinned memory when we neeed trasfert large amounts of data, the data resulting from the FFT transformation.
+Pinned memory is more expensive to allocate/deallocate compared to pageable memory, but accelerates large
+data transfers, especially when repeatedly using the same buffer, amortizing the initial cost.
+If we use too much the pinnel memory there is the risk of inefficiency use of RAM by host.
+#### Zero-Copy Memory**  
+It's a technique that allows the device to directly access host memory without explicitly
+copying data between the two memories, an exception to the rule that the host cannot directly access device variable
+and for the device the same.
+Both the host and the device can access zero-copy memory, with device accesses occurring directly via PCIe.
+We decided not to use it because our data transfer is relatively simple, and using zero-copy memory would require synchronization of access between the host and the device.
+For small shared data, zero-copy memory simplifies programming and offers reasonable performance but, for large datasets on discrete GPUs via PCIe, zero-copy causes significant performance degradation
+#### Unified Virtual Addressing (UVA)**
+Unified Virtual Addressing (UVA) is a technique that allows the CPU and GPU to share the same virtual address
+space (while physical memory remains distinct). There is no difference between host and device pointer, the CUDA runtime system automatically manages the mapping of virtual addresses to physical addresses.
 
+#### Unified Memory (UM)**
+In this case, we can use a unified 49-bit virtual memory space that allows all system processors to access the same data using a single pointer (single-pointer-to-data). This type of memory simplifies application code and memory management because it is automatically handled by the underlying system and is interoperable with device-specific allocations.
+
+Why did we decide to use normal memory addressing instead?
+Because we manage very simple data transfers and do not have a large or complex system with multiple CPUs and/or GPUs. Unified Memory (UM) adds latency, and we have no control over it.
+
+---
+### Global Memory Management
