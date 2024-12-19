@@ -82,6 +82,9 @@ Instructions and memory operation are issued and executed per warps(32 thread). 
 
 We shoud have an Aligned memory accesses and Coalesced memory accesses.
 For this reason we do a great use of index for every thread memory data access. 
+With the use of CudaMalloc, the alignment of the DRAM memory is 256byte.
+Each thread read and write 2 float (2 * 4byte = 8 byte), a warp in compose by 32thread.
+With 1 clock cycle we can read from memory 256 aline byte (32*8=256byte).
 
 ---
 ### Shared SM Memory Management
@@ -89,3 +92,4 @@ Memory on chip shared by every thread of a block within the same SM.
 The address are aligne to 32byte. 
 We need take care about bank conflict, when one ore more thread try to access to the date inside the same bank.
 Why it is dangerous ? because we need to serialize the operations.
+Each 32-thread warp performs concurrent access, for this reasone every read by a warp is the size of a line (32byte)
