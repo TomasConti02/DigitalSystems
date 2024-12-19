@@ -82,3 +82,10 @@ Instructions and memory operation are issued and executed per warps(32 thread). 
 
 We shoud have an Aligned memory accesses and Coalesced memory accesses.
 For this reason we do a great use of index for every thread memory data access. 
+
+---
+### Shared SM Memory Management
+Memory on chip shared by every thread of a block within the same SM.
+The address are aligne to 32byte. 
+We need take care about bank conflict, when one ore more thread try to access to the date inside the same bank.
+Why it is dangerous ? because we need to serialize the operations.
