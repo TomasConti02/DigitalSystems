@@ -1,3 +1,6 @@
+## GPU Datasheet ##
+we use Tesla T4 for testing our kernels.
+
 ## What kind of memory on and off chip we are using in our kernel ? ##
 ## GPU Memory Types
 ### **DRAM**  
@@ -19,13 +22,10 @@ Read-only memory off-chip, but a limited portion is on-chip for every SM, useful
 Total size is limited to 64 KB, and the memory space is accessible by all threads in a kernel.
 
 ### **Global Memory**  
-The largest and highest-latency GPU memory.  
-- **Scope and Lifetime**: Global scope, accessible by all threads across all SMs.  
-- **Declaration**: Declared with the `__device__` qualifier.  
-- **Allocation**: Allocated on the host using `cudaMalloc` and freed with `cudaFree`.  
-- **Persistence**: Remains active for the entire execution of the application on the GPU.  
-
----
+The largest and highest-latency GPU memory. It hasa global scope, accessible by all threads across all SMs within GPU.
+Declared with the `__device__` qualifier, it can be allocated on the host using `cudaMalloc` and freed with `cudaFree`.
+Remains active for the entire execution of the application on the GPU.  
+It is very roomy but also slow, for this reason we have to initialize it by only transfer, exploiting the but PCle
 
 ### **GPU Cache: Structure and Operation**  
 GPU caches are on-chip, non-programmable memory structures designed for fast data access.  
@@ -45,5 +45,5 @@ GPU caches are on-chip, non-programmable memory structures designed for fast dat
 - Present in each SM.  
 - Optimized for quick access to immutable data, such as lookup tables or constant parameters.  
 - Stores data that doesn't change during kernel execution.  
-
+---
 ---  
