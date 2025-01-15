@@ -8,6 +8,9 @@ listen to good quality music (streaming platforms use much lower quality).
 
 To have more flexibility, we use the Fast Fourier Transform to have the audio in two arrays that represent complex numbers: the first array with the real part and the second with the imaginary part. This simplifies the operations needed to process audio. Each array is divided into N slices (N as the number of equalizer bands, in our case is three: low freq., mid and high), every value of the slice is multiplied by a gain that increases or decreases the volume of that specific band.
 
+### Libraries ###
+The choice of libsndfile and FFTW3 libraries for the equalizer project is based on their reliability, performance, and ease of integration. Libsndfile is a widely used library for reading and writing audio files in various formats, ensuring robust handling of input and output data without the need for complex file format parsing. Its support for high-quality audio standards makes it ideal for applications requiring precision. FFTW3 (Fastest Fourier Transform in the West) was selected for its efficiency in performing discrete Fourier transforms (DFTs), a critical operation for frequency domain analysis and manipulation in the equalizer. The library is highly optimized, offering exceptional speed and flexibility for both real and complex input data. Together, these libraries streamline the development process, enabling the focus to remain on implementing and fine-tuning the equalization algorithm.
+
 ## FFT version ##
 First, the pattern of the "naive" equalizer in C++ is something like this:
 ```
