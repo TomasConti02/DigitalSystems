@@ -80,7 +80,7 @@ After about 30 executions of every version (with all C++ optimization levels), t
  - Speedup is way higher in IIR version (5x in O2 level!).
  - Total execution time is shorter in IIR version (about 8 times faster than FFT version).
 
-![Equalizer_simd_speedup](./speedup_comparison.jpeg)
+![Equalizer_simd_speedup](./speedup_comparison.jpg)
 The total execution time, expressed in seconds, considers the whole program, in the IIR we do not need the FFT operations so it's faster:
 ![Equalizer_simd_time](./time_comparison.jpg)
 
