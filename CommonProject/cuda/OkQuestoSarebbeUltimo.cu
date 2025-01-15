@@ -46,7 +46,7 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
     // Carica i dati in shared memory con accessi coalescenti
     #pragma unroll
     for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        const int globalIdx = baseIdx + i * 32;
+        const int globalIdx = baseIdx + i ;
         const int sharedIdx = tid + i * blockDim.x;
         
         if (globalIdx < numSamples) {
@@ -61,7 +61,7 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
     // Processa i dati e scrivi il risultato
     #pragma unroll
     for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        const int globalIdx = baseIdx + i * 32;
+        const int globalIdx = baseIdx + i ;
         const int sharedIdx = tid + i * blockDim.x;
         
         if (globalIdx < numSamples) {
