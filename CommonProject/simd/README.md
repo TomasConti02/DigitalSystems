@@ -1,4 +1,6 @@
 # SIMD equalizer #
+## What is an equalizer? ##
+An equalizer is an audio processing tool designed to adjust the amplitude of specific frequency bands within a sound signal. It operates by dividing the audio spectrum into distinct ranges—such as bass, midrange, and treble—and applying filters to boost or attenuate the signal in each band. From an engineering perspective, it can be viewed as a system of frequency-selective filters, similar to how an electrical circuit might use resistors, capacitors, and inductors to control signal flow. Equalizers are crucial for tailoring audio output to meet specific needs, whether to compensate for room acoustics, improve clarity, or achieve a desired tonal balance in a mix.
 ### The data processed ###
 We have a `.wav` file, the bit depth is 16, which means that each frame ("sample") is 16 bit, and the sample rate is 44100 Hz, meaning that each second we have 44100 samples. 
 This configuration of bit depth + sample rate is the CD standard, usually musicians can record with a sample rate of 48000 (also more for advanced scenarios) and a bit depth of 24, but the CD standard is sufficient to 
