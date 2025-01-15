@@ -95,3 +95,15 @@ Ultimately, the choice between these two methods depends on the specific require
 -   If maximum audio quality is the priority and computational resources are available, the FFT-based equalizer is the more suitable option.
 
 Future improvements could focus on refining the IIR filter design to improve precision without sacrificing speed, or exploring hybrid approaches that combine the strengths of both methods.
+
+### Additional experiment with OMP ###
+We conducted an experiment to integrate OpenMP with vector register instructions to evaluate the performance improvements. The results show that while the combination of OpenMP and SIMD instructions can yield notable speedups in certain scenarios, such as with the -O0 optimization level where the average speedup was 2.5690, the benefits diminish with higher optimization levels. At -O1, -O2, and -O3, the speedups were closer to 1, indicating that the compiler optimizations effectively utilize vectorization and parallelism, reducing the additional gains from OpenMP. This suggests that careful consideration is required when combining parallel programming models with vectorization to achieve meaningful performance improvements.
+
+The #pragma directive is stated before the `for` loop of the gain multiplication:
+```
+#pragma omp parallel for num_threads(4) schedule(static)
+for (int i = 0; i < lowBandEnd; i += 4) {
+        _mm_store_ps(&real[i], _mm_mul_ps(lowGain, _mm_load_ps(&real[i])));
+        _mm_store_ps(&imag[i], _mm_mul_ps(lowGain, _mm_load_ps(&imag[i])));
+}
+```
