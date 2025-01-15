@@ -51,20 +51,20 @@ Where `x(n)` is the input sample, `y(n)` the filtered output and `a`,`b`,`z` the
 
 In scalar mode, the code is:
 ```
-		// First, separate bands by filtering
-		int16_t low = applyIIRFilterSequential(samples[i], bLow, aLow, zLow);
+// First, separate bands by filtering
+int16_t low = applyIIRFilterSequential(samples[i], bLow, aLow, zLow);
 
-		// Then apply gains to each separated band
-		low = static_cast<int16_t>((static_cast<int32_t>(low) * lowGain) >> 16);
+// Then apply gains to each separated band
+low = static_cast<int16_t>((static_cast<int32_t>(low) * lowGain) >> 16);
 ```
 
 And the parallel function is similar:
 ```
-        // Apply filters
-        applyIIRFilterSIMD(&samples1_32, &low1_32, 4, bLow, aLow, zLow);
-        
-		// Apply gains with intermediate scaling
-		low1_32=_mm_srai_epi32(_mm_mullo_epi32(low1_32,lowGain),FIXED_POINT_SCALE);
+// Apply filters
+applyIIRFilterSIMD(&samples1_32, &low1_32, 4, bLow, aLow, zLow);
+
+// Apply gains with intermediate scaling
+low1_32=_mm_srai_epi32(_mm_mullo_epi32(low1_32,lowGain),FIXED_POINT_SCALE);
 ```
 
 But, as introduced before, we have some **precision problems**:
