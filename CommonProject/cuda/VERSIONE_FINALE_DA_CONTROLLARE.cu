@@ -14,7 +14,53 @@
 #define SHAREDSIZE ELEMENTS_PER_THREAD*BLOCK_SIZE
 __constant__ float d_gains[3];  // [lowGain, midGain, highGain]
 __constant__ int d_bandLimits[2];  // [lowEnd, midEnd]
-
+/*
+__global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
+    __shared__ float sharedReal[SHAREDSIZE];
+    __shared__ float sharedImag[SHAREDSIZE];
+    
+    // Calcola gli indici per accessi coalescenti
+    const int tid = threadIdx.x;
+    const int warpSize = 32;
+    const int warpId = tid / warpSize;
+    const int laneId = tid % warpSize;
+    
+    // Calcola l'offset base per il blocco
+    const int blockOffset = blockIdx.x * blockDim.x * ELEMENTS_PER_THREAD;
+    
+    // Per ogni elemento da processare per thread
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        // Calcola l'indice globale con accesso coalescente
+        const int globalIdx = blockOffset + laneId + (i * warpSize) + (warpId * warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            // Carica i dati in shared memory con accessi coalescenti
+            sharedReal[sharedIdx] = real[globalIdx];
+            sharedImag[sharedIdx] = imag[globalIdx];
+        }
+    }
+    
+    __syncthreads();
+    
+    // Ricalcola gli indici per il processing
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        const int globalIdx = blockOffset + laneId + (i * warpSize) + (warpId * warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            // Determina il gain in base alla frequenza
+            float gain = (globalIdx < d_bandLimits[0]) ? d_gains[0] : 
+                        (globalIdx < d_bandLimits[1]) ? d_gains[1] : d_gains[2];
+            
+            // Scrivi il risultato con accessi coalescenti
+            real[globalIdx] = sharedReal[sharedIdx] * gain;
+            imag[globalIdx] = sharedImag[sharedIdx] * gain;
+        }
+    }
+}*/
 
 __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
     __shared__ float sharedReal[SHAREDSIZE];
