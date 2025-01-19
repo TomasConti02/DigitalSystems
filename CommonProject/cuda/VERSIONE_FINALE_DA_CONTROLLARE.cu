@@ -24,8 +24,8 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
    
     // Thread indexing
     const int tid = threadIdx.x;
-    const int warpId = tid / d_warpSize;
-    const int laneId = tid % d_warpSize;
+    const int warpId = tid / d_warpSize; //in quale warp si trova il thread
+    const int laneId = tid % d_warpSize; //la posizione del thread dentro il warp identificato dal warpId
     const int baseIdx = blockIdx.x * (blockDim.x * ELEMENTS_PER_THREAD);
 
     // Load data into shared memory with coalesced access
