@@ -9,34 +9,32 @@
 #include <cstring>
 
 #define SAMPLE_RATE 44100
-#define BLOCK_SIZE 64
-#define ELEMENTS_PER_THREAD 2
+#define BLOCK_SIZE 256
+#define ELEMENTS_PER_THREAD 4
 #define SHAREDSIZE ELEMENTS_PER_THREAD*BLOCK_SIZE
+
+// Group all constant memory variables together
 __constant__ float d_gains[3];  // [lowGain, midGain, highGain]
 __constant__ int d_bandLimits[2];  // [lowEnd, midEnd]
-/*
+__constant__ int d_warpSize;  // CUDA warp size
 __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
     __shared__ float sharedReal[SHAREDSIZE];
     __shared__ float sharedImag[SHAREDSIZE];
     
-    // Calcola gli indici per accessi coalescenti
+   
+    // Thread indexing
     const int tid = threadIdx.x;
-    const int warpSize = 32;
-    const int warpId = tid / warpSize;
-    const int laneId = tid % warpSize;
-    
-    // Calcola l'offset base per il blocco
-    const int blockOffset = blockIdx.x * blockDim.x * ELEMENTS_PER_THREAD;
-    
-    // Per ogni elemento da processare per thread
+    const int warpId = tid / d_warpSize;
+    const int laneId = tid % d_warpSize;
+    const int baseIdx = blockIdx.x * (blockDim.x * ELEMENTS_PER_THREAD);
+
+    // Load data into shared memory with coalesced access
     #pragma unroll
     for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        // Calcola l'indice globale con accesso coalescente
-        const int globalIdx = blockOffset + laneId + (i * warpSize) + (warpId * warpSize * ELEMENTS_PER_THREAD);
-        const int sharedIdx = tid + i * blockDim.x;
+        const int globalIdx = baseIdx + laneId + (i * d_warpSize) + (warpId * d_warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + (i * blockDim.x);
         
         if (globalIdx < numSamples) {
-            // Carica i dati in shared memory con accessi coalescenti
             sharedReal[sharedIdx] = real[globalIdx];
             sharedImag[sharedIdx] = imag[globalIdx];
         }
@@ -44,64 +42,63 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
     
     __syncthreads();
     
-    // Ricalcola gli indici per il processing
+    // Process and write back with coalesced access
     #pragma unroll
     for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        const int globalIdx = blockOffset + laneId + (i * warpSize) + (warpId * warpSize * ELEMENTS_PER_THREAD);
-        const int sharedIdx = tid + i * blockDim.x;
+        const int globalIdx = baseIdx + laneId + (i * d_warpSize) + (warpId * d_warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + (i * blockDim.x);
         
         if (globalIdx < numSamples) {
-            // Determina il gain in base alla frequenza
+            // Calculate gain only once per element
             float gain = (globalIdx < d_bandLimits[0]) ? d_gains[0] : 
                         (globalIdx < d_bandLimits[1]) ? d_gains[1] : d_gains[2];
             
-            // Scrivi il risultato con accessi coalescenti
-            real[globalIdx] = sharedReal[sharedIdx] * gain;
-            imag[globalIdx] = sharedImag[sharedIdx] * gain;
-        }
-    }
-}*/
-
-__global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
-    __shared__ float sharedReal[SHAREDSIZE];
-    __shared__ float sharedImag[SHAREDSIZE];
-    
-    // Calcola gli indici base per accessi coalescenti
-    const int tid = threadIdx.x;
-    //const int totalThreads = blockDim.x * gridDim.x;
-    const int baseIdx = blockIdx.x * blockDim.x + tid;
-    
-    // Carica i dati in shared memory con accessi coalescenti
-    const int Nuovo=baseIdx*ELEMENTS_PER_THREAD;
-    #pragma unroll
-    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        const int globalIdx = Nuovo + i;
-        const int sharedIdx = tid + i * blockDim.x;
-        
-        if (baseIdx < numSamples) {
-            // Accesso coalescente alla memoria globale
-            sharedReal[sharedIdx] = real[globalIdx];
-            sharedImag[sharedIdx] = imag[globalIdx];
-        }
-    }
-    __syncthreads();
-    float gain = (Nuovo < d_bandLimits[0]) ? d_gains[0] : 
-                        (Nuovo < d_bandLimits[1]) ? d_gains[1] : d_gains[2];
-    // Processa i dati e scrivi il risultato
-    #pragma unroll
-    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
-        const int globalIdx = Nuovo + i ;
-        const int sharedIdx = tid + i * blockDim.x;
-        
-        if (baseIdx < numSamples) {
-            // Calcola il gain una sola volta per ogni elemento
-            // Accesso coalescente alla memoria globale
+            // Write back to global memory
             real[globalIdx] = sharedReal[sharedIdx] * gain;
             imag[globalIdx] = sharedImag[sharedIdx] * gain;
         }
     }
 }
-
+/*
+__global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
+    __shared__ float sharedReal[SHAREDSIZE];
+    __shared__ float sharedImag[SHAREDSIZE];
+    
+    // Use d_warpSize from constant memory
+    const int tid = threadIdx.x;
+    const int warpId = tid / d_warpSize;
+    const int laneId = tid % d_warpSize;
+    
+    const int blockOffset = blockIdx.x * blockDim.x * ELEMENTS_PER_THREAD;
+    
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        const int globalIdx = blockOffset + laneId + (i * d_warpSize) + (warpId * d_warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            sharedReal[sharedIdx] = real[globalIdx];
+            sharedImag[sharedIdx] = imag[globalIdx];
+        }
+    }
+    
+    __syncthreads();
+    
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        const int globalIdx = blockOffset + laneId + (i * d_warpSize) + (warpId * d_warpSize * ELEMENTS_PER_THREAD);
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            float gain = (globalIdx < d_bandLimits[0]) ? d_gains[0] : 
+                        (globalIdx < d_bandLimits[1]) ? d_gains[1] : d_gains[2];
+            
+            real[globalIdx] = sharedReal[sharedIdx] * gain;
+            imag[globalIdx] = sharedImag[sharedIdx] * gain;
+        }
+    }
+}
+*/
 void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate) {
     int bandLimits[2];
     bandLimits[0] = static_cast<int>(300.0f / (static_cast<float>(sampleRate) / numSamples));
@@ -113,8 +110,13 @@ void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate
         std::pow(10.0f, -3.0f / 20.0f)
     };
     
+    // Initialize warpSize value
+    int warpSize = 32;
+    
+    // Copy all constant values to device memory
     cudaMemcpyToSymbol(d_gains, gains, sizeof(float) * 3);
     cudaMemcpyToSymbol(d_bandLimits, bandLimits, sizeof(int) * 2);
+    cudaMemcpyToSymbol(d_warpSize, &warpSize, sizeof(int));
     
     float *d_real, *d_imag;
     cudaMalloc(&d_real, numSamples * sizeof(float));
@@ -140,7 +142,7 @@ void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate
 
 int main(int argc, char* argv[]) {
     const char* inputFile = "/content/drive/MyDrive/Colab Notebooks/fullSong1.wav";
-    const char* outputFile = "/content/drive/MyDrive/Colab Notebooks/fullSongaaaaaaaaaaaaaaaaaaa.wav";
+    const char* outputFile = "/content/drive/MyDrive/Colab Notebooks/fullSongsong.wav";
     SF_INFO sfInfo{};
     SNDFILE* inFile = sf_open(inputFile, SFM_READ, &sfInfo);
     
