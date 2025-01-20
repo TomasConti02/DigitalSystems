@@ -75,6 +75,45 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
 
 
 */
+/*
+__global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
+    __shared__ float sharedReal[SHAREDSIZE];
+    __shared__ float sharedImag[SHAREDSIZE];
+    
+    // Calcola gli indici base per accessi coalescenti
+    const int tid = threadIdx.x;
+    //const int totalThreads = blockDim.x * gridDim.x;
+     const int baseIdx = blockIdx.x * (blockDim.x * ELEMENTS_PER_THREAD);
+    
+    // Carica i dati in shared memory con accessi coalescenti
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        const int globalIdx = baseIdx +tid*ELEMENTS_PER_THREAD + i ;
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            // Accesso coalescente alla memoria globale
+            sharedReal[sharedIdx] = real[globalIdx];
+            sharedImag[sharedIdx] = imag[globalIdx];
+        }
+    }
+    __syncthreads();
+    float gain = (baseIdx < d_bandLimits[0]) ? d_gains[0] : 
+                        (baseIdx < d_bandLimits[1]) ? d_gains[1] : d_gains[2];
+    // Processa i dati e scrivi il risultato
+    #pragma unroll
+    for (int i = 0; i < ELEMENTS_PER_THREAD; i++) {
+        const int globalIdx = baseIdx +tid*ELEMENTS_PER_THREAD + i ;
+        const int sharedIdx = tid + i * blockDim.x;
+        
+        if (globalIdx < numSamples) {
+            // Calcola il gain una sola volta per ogni elemento
+            // Accesso coalescente alla memoria globale
+            real[globalIdx] = sharedReal[sharedIdx] * gain;
+            imag[globalIdx] = sharedImag[sharedIdx] * gain;
+        }
+    }
+}*/
 
 __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __restrict__ imag, const int numSamples) {
     __shared__ float sharedReal[SHAREDSIZE];
