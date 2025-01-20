@@ -98,6 +98,63 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
         }
     }
 }
+
+Analizziamo gli accessi alla memoria globale per ogni thread richiesto. Userò i valori BLOCK_SIZE=256 e ELEMENTS_PER_THREAD=4.
+
+Thread 0 del primo blocco (blockIdx.x = 0):
+
+
+tid = 0
+warpId = 0/32 = 0
+laneId = 0%32 = 0
+baseIdx = 0 * (256 * 4) = 0
+
+I suoi globalIdx saranno:
+
+i=0: globalIdx = 0 + 0 + (0 * 32) + (0 * 32 * 4) = 0
+i=1: globalIdx = 0 + 0 + (1 * 32) + (0 * 32 * 4) = 32
+i=2: globalIdx = 0 + 0 + (2 * 32) + (0 * 32 * 4) = 64
+i=3: globalIdx = 0 + 0 + (3 * 32) + (0 * 32 * 4) = 96
+
+
+Thread 32 del primo blocco (blockIdx.x = 0):
+
+
+tid = 32
+warpId = 32/32 = 1
+laneId = 32%32 = 0
+baseIdx = 0 * (256 * 4) = 0
+
+I suoi globalIdx saranno:
+
+i=0: globalIdx = 0 + 0 + (0 * 32) + (1 * 32 * 4) = 128
+i=1: globalIdx = 0 + 0 + (1 * 32) + (1 * 32 * 4) = 160
+i=2: globalIdx = 0 + 0 + (2 * 32) + (1 * 32 * 4) = 192
+i=3: globalIdx = 0 + 0 + (3 * 32) + (1 * 32 * 4) = 224
+
+
+Thread 0 del secondo blocco (blockIdx.x = 1):
+
+
+tid = 0
+warpId = 0/32 = 0
+laneId = 0%32 = 0
+baseIdx = 1 * (256 * 4) = 1024
+
+I suoi globalIdx saranno:
+
+i=0: globalIdx = 1024 + 0 + (0 * 32) + (0 * 32 * 4) = 1024
+i=1: globalIdx = 1024 + 0 + (1 * 32) + (0 * 32 * 4) = 1056
+i=2: globalIdx = 1024 + 0 + (2 * 32) + (0 * 32 * 4) = 1088
+i=3: globalIdx = 1024 + 0 + (3 * 32) + (0 * 32 * 4) = 1120
+
+Quindi:
+
+Il thread 0 del blocco 0 accede agli indici: [0, 32, 64, 96]
+Il thread 32 del blocco 0 accede agli indici: [128, 160, 192, 224]
+Il thread 0 del blocco 1 accede agli indici: [1024, 1056, 1088, 1120]
+
+Questi indici rappresentano gli accessi sia in lettura (array real e imag) che in scrittura.
 */
 void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate) {
     int bandLimits[2];
