@@ -155,6 +155,25 @@ Il thread 32 del blocco 0 accede agli indici: [128, 160, 192, 224]
 Il thread 0 del blocco 1 accede agli indici: [1024, 1056, 1088, 1120]
 
 Questi indici rappresentano gli accessi sia in lettura (array real e imag) che in scrittura.
+Per i=0:
+Thread 0:  globalIdx = 0 + 0 + 0 = 0
+Thread 1:  globalIdx = 0 + 1 + 0 = 1
+Thread 2:  globalIdx = 0 + 2 + 0 = 2
+...
+Thread 31: globalIdx = 0 + 31 + 0 = 31
+
+Per i=1:
+Thread 0:  globalIdx = 0 + 0 + 32 = 32
+Thread 1:  globalIdx = 0 + 1 + 32 = 33
+Thread 2:  globalIdx = 0 + 2 + 32 = 34
+...
+Thread 31: globalIdx = 0 + 31 + 32 = 63
+Per i=0:
+Thread 32: globalIdx = 0 + 0 + 128 = 128
+Thread 33: globalIdx = 0 + 1 + 128 = 129
+Thread 34: globalIdx = 0 + 2 + 128 = 130
+...
+Thread 63: globalIdx = 0 + 31 + 128 = 159
 */
 void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate) {
     int bandLimits[2];
