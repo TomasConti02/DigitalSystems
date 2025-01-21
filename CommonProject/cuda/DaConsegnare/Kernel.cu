@@ -23,7 +23,7 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
    // Thread indexing
    const int tid = threadIdx.x;                // Thread ID dentro il blocco
    const int warpId = tid / d_warpSize;        // Warp ID
-   const int laneId = tid % d_warpSize;        // Lane ID dentro il warp
+   const int laneId = tid & 31;         // Lane ID dentro il warp, al posto di const int laneId = tid % d_warpSize;
    const int baseIdx = blockIdx.x * (blockDim.x * ELEMENTS_PER_THREAD);
    const int warpOffset = warpId * d_warpSize * ELEMENTS_PER_THREAD; // Precalcolato
    #pragma unroll
@@ -91,8 +91,8 @@ void applyCudaEqualizer(float* real, float* imag, int numSamples, int sampleRate
 }
 
 int main(int argc, char* argv[]) {
-    const char* inputFile = "/content/drive/MyDrive/Colab Notebooks/long.wav";
-    const char* outputFile = "/content/drive/MyDrive/Colab Notebooks/long2222.wav";
+    const char* inputFile = "/content/drive/MyDrive/Colab Notebooks/fullSong1.wav";
+    const char* outputFile = "/content/drive/MyDrive/Colab Notebooks/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.wav";
     SF_INFO sfInfo{};
     SNDFILE* inFile = sf_open(inputFile, SFM_READ, &sfInfo);
     
