@@ -82,7 +82,7 @@ After about 30 executions of every version (with all C++ optimization levels), t
 
 ![Equalizer_simd_speedup](./speedup_comparison.jpg)
 The total execution time, expressed in seconds, considers the whole program, in the IIR we do not need the FFT operations so it's faster:
-![Equalizer_simd_time](./time_comparison.jpg)
+![Equalizer_simd_time](./elapsed_time_comparison.jpg)
 
 ### Conclusions ###
 In conclusion, both the FFT-based and IIR-based equalizers have their advantages and trade-offs. The FFT-based approach provides high precision and better audio quality, making it ideal for situations where the utmost accuracy is required. It allows for detailed frequency division and manipulation, but comes with higher computational costs due to the complexity of the Fast Fourier Transform.
