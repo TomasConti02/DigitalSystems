@@ -12,7 +12,6 @@
 #define BLOCK_SIZE 256
 #define ELEMENTS_PER_THREAD 4
 #define SHAREDSIZE ELEMENTS_PER_THREAD*BLOCK_SIZE
-
 // Group all constant memory variables together
 __constant__ float d_gains[3];  // [lowGain, midGain, highGain]
 __constant__ int d_bandLimits[2];  // [lowEnd, midEnd]
@@ -23,7 +22,7 @@ __global__ void applyMultiBandGainKernel(float* __restrict__ real, float* __rest
    // Thread indexing
    const int tid = threadIdx.x;                // Thread ID dentro il blocco
    const int warpId = tid / d_warpSize;        // Warp ID
-   const int laneId = tid & 31;         // Lane ID dentro il warp, al posto di const int laneId = tid % d_warpSize;
+   const int laneId = tid % d_warpSize;
    const int baseIdx = blockIdx.x * (blockDim.x * ELEMENTS_PER_THREAD);
    const int warpOffset = warpId * d_warpSize * ELEMENTS_PER_THREAD; // Precalcolato
    #pragma unroll
