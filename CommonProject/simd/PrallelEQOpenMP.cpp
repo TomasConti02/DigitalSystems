@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
 
     int numSamples = sfInfo.frames * sfInfo.channels;
 
-    float* real = (float*)std::aligned_alloc(64, sizeof(float) * numSamples);
-    float* imag = (float*)std::aligned_alloc(64, sizeof(float) * numSamples);
+    float* real = (float*)std::aligned_alloc(16, sizeof(float) * numSamples);
+    float* imag = (float*)std::aligned_alloc(16, sizeof(float) * numSamples);
     std::vector<short> buffer(numSamples);
 
     sf_read_short(inFile, buffer.data(), numSamples);
