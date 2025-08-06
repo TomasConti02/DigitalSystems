@@ -94,6 +94,8 @@ def formatting_prompts_func(examples):
     return {"text": texts}
 
 # Map the formatting function across all dataset entries.
+from unsloth.chat_templates import standardize_sharegpt
+dataset = standardize_sharegpt(dataset)
 dataset = dataset.map(formatting_prompts_func, batched=True)
 
 # Print the first 3 formatted examples for verification.
