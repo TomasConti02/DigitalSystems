@@ -1,26 +1,28 @@
 %%capture
-# Suppresses the output of this cell. Useful for keeping the notebook clean during installations.
-
+# Suppress output to keep the notebook clean during installation
 import os
+
+# Check if we're running in Colab or Kaggle
 if "COLAB_" not in "".join(os.environ.keys()):
-    # If not running in Colab or Kaggle, install only the base Unsloth library.
+    # Local installation: install only the core Unsloth library
     !pip install unsloth
 else:
-    # If running inside Colab or Kaggle, install all required dependencies manually.
+    # Colab/Kaggle installation: install dependencies manually
     !pip install --no-deps bitsandbytes accelerate xformers==0.0.29 peft trl triton
     !pip install --no-deps cut_cross_entropy unsloth_zoo
     !pip install sentencepiece protobuf datasets huggingface_hub hf_transfer
     !pip install --no-deps unsloth
-
+###################################################################################################
+# Import Unsloth's model loader
 from unsloth import FastLanguageModel
 import torch
 
-# Configuration for model loading and quantization.
-max_seq_length = 2048  # Maximum token sequence length. Longer contexts are supported.
-dtype = None           # Automatically detect the optimal data type (e.g., float16 or bfloat16).
-load_in_4bit = True    # Enable 4-bit quantization to reduce memory usage.
-
-# Pre-defined 4-bit quantized models supported by Unsloth for efficient loading and training.
+# Set up model loading configuration
+max_seq_length = 2048     # Maximum context length for prompts
+dtype = None              # Automatically selects float16 or bfloat16 depending on GPU support
+load_in_4bit = True       # Load model in 4-bit quantization (saves VRAM)
+###################################################################################################
+# List of 4-bit quantized models supported by Unsloth
 fourbit_models = [
     "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
     "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
@@ -38,68 +40,123 @@ fourbit_models = [
     "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
     "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
 ]
-
-# Load the pre-trained model and tokenizer using Unsloth's optimized loading mechanism.
+###################################################################################################
+# Load a quantized 4-bit pre-trained model
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/Llama-3.2-3B-Instruct",  # Choose any supported model.
+    model_name = "unsloth/Llama-3.2-3B-Instruct",  # Choose any model from the list above
     max_seq_length = max_seq_length,
     dtype = dtype,
     load_in_4bit = load_in_4bit,
-    # token = "hf_..."  # Use this if accessing gated models that require authentication.
+    # token = "hf_..."  # Uncomment if your model requires authentication
 )
-
-# Apply Parameter Efficient Fine-Tuning (PEFT) using LoRA.
+###################################################################################################
+# Apply Parameter-Efficient Fine-Tuning (PEFT) using LoRA
 model = FastLanguageModel.get_peft_model(
     model,
-    r = 16,  # LoRA rank; higher values add more trainable parameters.
-    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
-                      "gate_proj", "up_proj", "down_proj"],
-    lora_alpha = 16,           # Scaling factor for LoRA layers.
-    lora_dropout = 0,          # Dropout rate; zero is optimal for most cases.
-    bias = "none",             # Type of bias; "none" uses the least memory.
-    use_gradient_checkpointing = "unsloth",  # Enable gradient checkpointing to save VRAM.
-    random_state = 3407,       # Random seed for reproducibility.
-    use_rslora = False,        # Disable Rank-Stabilized LoRA.
-    loftq_config = None        # LoftQ configuration (unused here).
+    r = 16,  # LoRA rank (higher = more capacity but slower)
+    target_modules = [
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    lora_alpha = 16,           # Scaling factor for LoRA
+    lora_dropout = 0,          # No dropout for training stability
+    bias = "none",             # No additional bias parameters
+    use_gradient_checkpointing = "unsloth",  # Reduces VRAM usage during training
+    random_state = 3407,       # Seed for reproducibility
+    use_rslora = False,        # Disable Rank-Stabilized LoRA
+    loftq_config = None        # Not using LoftQ quantization
 )
-
-# Import libraries for dataset handling, chat formatting, and pretty printing.
+###################################################################################################
+# Load and preprocess your dataset
 from datasets import load_dataset
 from unsloth.chat_templates import get_chat_template
 from pprint import pprint
 
-# Load a custom dataset from Hugging Face or local file.
+# Load dataset from Hugging Face hub or local path
 dataset = load_dataset(
-    path="tomasconti/TestTuning",             # Dataset repo or local directory.
-    data_files="formatted_blackhole_dataset_20.json",  # Data file containing formatted conversations.
-    split="train"                             # Load the 'train' split.
+    path = "tomasconti/TestTuning",                 # HF dataset repo or local directory
+    data_files = "formatted_blackhole_dataset_20.json",  # JSON file with formatted conversations
+    split = "train"                                 # Load the training split
 )
-
-# Apply a LLaMA-style chat template to the tokenizer.
+###################################################################################################
+# Apply the appropriate chat template for LLaMA 3.1
 tokenizer = get_chat_template(
     tokenizer,
-    chat_template="llama-3.1",  # Format conversations for LLaMA 3.1 models.
+    chat_template = "llama-3.1",  # Format prompt/response with LLaMA 3.1 style tags
 )
-
-# Format the dataset by applying the chat template to each conversation.
+###################################################################################################
+# Format each example into a complete prompt using the tokenizer
 def formatting_prompts_func(examples):
     convos = examples["conversations"]
     texts = [
         tokenizer.apply_chat_template(
             convo,
-            tokenize=False,             # Return raw text, not tokenized output.
-            add_generation_prompt=False # Do not add generation tokens at the end.
+            tokenize = False,              # Return string, not token IDs
+            add_generation_prompt = False  # Don’t append assistant generation tokens
         ) for convo in convos
     ]
     return {"text": texts}
-
-# Map the formatting function across all dataset entries.
+###################################################################################################
+# Standardize ShareGPT-like format, then apply formatting to all examples
 from unsloth.chat_templates import standardize_sharegpt
-dataset = standardize_sharegpt(dataset)
-dataset = dataset.map(formatting_prompts_func, batched=True)
 
-# Print the first 3 formatted examples for verification.
-print("📄 Esempi formattati dal dataset:\n")
+dataset = standardize_sharegpt(dataset)                     # Convert raw format to ShareGPT-style
+dataset = dataset.map(formatting_prompts_func, batched=True)  # Apply prompt formatting
+###################################################################################################
+# Print 3 examples to verify the formatting
+print("📄 Formatted dataset examples:\n")
 for i in range(3):
     pprint(dataset[i]["text"])
     print("\n" + "-" * 80 + "\n")
+###################################################################################################
+# Import trainer and training arguments
+from trl import SFTTrainer
+from transformers import TrainingArguments, DataCollatorForSeq2Seq
+from unsloth import is_bfloat16_supported
+
+# Initialize the trainer for supervised fine-tuning
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    dataset_text_field = "text",  # Field in dataset containing the prompt
+    max_seq_length = max_seq_length,
+    data_collator = DataCollatorForSeq2Seq(tokenizer = tokenizer),
+    dataset_num_proc = 2,         # Use 2 processes for preprocessing (adjust if needed)
+    packing = False,              # Set to True if you want to pack short sequences together
+    args = TrainingArguments(
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,  # Simulates effective batch size = 2 * 4 = 8
+        warmup_steps = 5,
+        # num_train_epochs = 1,    # Optional: can use `max_steps` instead
+        max_steps = 60,           # Run training for 60 steps (good for testing)
+        learning_rate = 2e-4,
+        fp16 = not is_bfloat16_supported(),  # Use fp16 unless bf16 is supported
+        bf16 = is_bfloat16_supported(),
+        logging_steps = 1,        # Log every step
+        optim = "adamw_8bit",     # Use 8-bit Adam optimizer
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        report_to = "none",       # Set to "wandb" if using Weights & Biases
+    ),
+)
+###################################################################################################
+# Train only on assistant responses (ignores the user input parts)
+from unsloth.chat_templates import train_on_responses_only
+
+trainer = train_on_responses_only(
+    trainer,
+    instruction_part = "<|start_header_id|>user<|end_header_id|>\n\n",       # Marks user input
+    response_part = "<|start_header_id|>assistant<|end_header_id|>\n\n",     # Marks assistant reply
+)
+###################################################################################################
+# (Optional) Debug a specific sample by printing the decoded labels
+space = tokenizer(" ", add_special_tokens = False).input_ids[0]
+
+# Replace label -100 (masked) tokens with space for readability
+tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["labels"]])
+###################################################################################################
+# 🚀 Start training!
+trainer_stats = trainer.train()
