@@ -160,3 +160,60 @@ tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["l
 ###################################################################################################
 # 🚀 Start training!
 trainer_stats = trainer.train()
+###################################################################################################
+# === Import chat template for LLaMA 3.1-style conversation formatting ===
+from unsloth.chat_templates import get_chat_template
+from unsloth import FastLanguageModel
+from transformers import TextStreamer
+
+# === Apply the LLaMA 3.1 chat template to the tokenizer ===
+tokenizer = get_chat_template(
+    tokenizer,
+    chat_template="llama-3.1",  # Defines the conversation formatting style
+)
+
+# === Optimize the model for inference (faster generation) ===
+FastLanguageModel.for_inference(model)
+
+# === Define a sample user message (prompt) ===
+messages = [
+    {"role": "user", "content": "Continue the Fibonacci sequence: 1, 1, 2, 3, 5, 8,"},
+]
+
+# === Tokenize the chat-style input with generation flag ===
+inputs = tokenizer.apply_chat_template(
+    messages,
+    tokenize=True,
+    add_generation_prompt=True,  # Adds "Assistant:" to indicate where generation starts
+    return_tensors="pt",         # Return PyTorch tensors
+).to("cuda")                     # Move input tensors to GPU
+
+# === Option 1: Generate output and decode the full response ===
+outputs = model.generate(
+    input_ids=inputs,
+    max_new_tokens=64,       # Limit the number of new tokens generated
+    use_cache=True,          # Speed up generation with caching
+    temperature=1.5,         # High temp = more creativity
+    min_p=0.1                # nucleus/top-p sampling for diversity
+)
+
+# === Decode and print the output text ===
+response = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+print("Generated response:\n", response[0])
+
+
+# === Option 2: Stream the output token by token (live printing) ===
+text_streamer = TextStreamer(tokenizer, skip_prompt=True)
+_ = model.generate(
+    input_ids=inputs,
+    streamer=text_streamer,  # Stream output live
+    max_new_tokens=128,
+    use_cache=True,
+    temperature=1.5,
+    min_p=0.1,
+)
+
+
+# === Save the fine-tuned model and tokenizer to disk ===
+model.save_pretrained("MY_MODEL")         # Save model weights/config
+tokenizer.save_pretrained("MY_MODEL")     # Save tokenizer with chat template
