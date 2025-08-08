@@ -161,6 +161,7 @@ tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["l
 # 🚀 Start training!
 trainer_stats = trainer.train()
 ###################################################################################################
+"""
 # === Import chat template for LLaMA 3.1-style conversation formatting ===
 from unsloth.chat_templates import get_chat_template
 from unsloth import FastLanguageModel
@@ -217,3 +218,4 @@ _ = model.generate(
 # === Save the fine-tuned model and tokenizer to disk ===
 model.save_pretrained("MY_MODEL")         # Save model weights/config
 tokenizer.save_pretrained("MY_MODEL")     # Save tokenizer with chat template
+"""
