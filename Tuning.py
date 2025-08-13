@@ -186,10 +186,21 @@ tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[sampl
 trainer_stats = trainer.train()
 ##################################################################################################
 messages = [
-    {"role": "user", "content": "Spiegami in breve cos'è il Jobs Act."}
+    {"role": "user", "content": "Cos'è un algoritmo di ordinamento?"}
 ]
 chat_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 inputs = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
 
 outputs = model.generate(**inputs, max_new_tokens=200)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+##################################################################################################
+"""outputs = model.generate(
+    **inputs,
+    max_new_tokens=512,  # più spazio per completare
+    do_sample=True,      # sampling per creatività
+    top_p=0.9,           # nucleus sampling
+    temperature=0.7      # leggermente creativo ma non troppo
+)
+
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+"""
