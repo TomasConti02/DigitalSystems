@@ -24,7 +24,7 @@ dtype = None              # Automatically selects float16 or bfloat16 depending 
 #load_in_4bit = True       # Load model in 4-bit quantization (saves VRAM)
 # List of 4-bit quantized models supported by Unsloth
 dtype = torch.float16        # Precisione alta, ideale su T4
-load_in_4bit = False         # Disabilitiamo la quantizzazione
+#load_in_4bit = False         # Disabilitiamo la quantizzazione
 fourbit_models = [ #solo una lista di modelli già quantizzati a 4 bit
     "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
     "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
@@ -45,24 +45,35 @@ fourbit_models = [ #solo una lista di modelli già quantizzati a 4 bit
 ##################################################################################################
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name = "unsloth/Llama-3.2-3B-Instruct",  #il modello
-    max_seq_length = max_seq_length, #max seq d token
-    dtype = dtype, #data type 16bit
-    load_in_4bit = load_in_4bit, #non quantizzato
+    max_seq_length = max_seq_length, #max seq d token (max context lenght)
+    dtype = dtype, #data type 16bit more accuracy
+    load_in_4bit = False, 
     # token = "hf_..."  # Uncomment if your model requires authentication
 )
 # model → è l’oggetto PyTorch che rappresenta la rete neurale (LLM).
 # tokenizer → converte il testo in token numerici e viceversa, fondamentale per dialogare col modello.
 ##################################################################################################
 # Apply Parameter-Efficient Fine-Tuning (PEFT) using LoRA
-#LoRA sarebbe un modo per fare il fine tuning aggiungendo parametri al modello
-#ritrasformiamo il modello in uno adatto per LoRA
-#preprariamo il modello del l'aggiunta di matrici
+#Prende il modello base e lo “avvolge” con gli adapter LoRA (le due matrici low-rank per ogni layer target). Il modello originale resta congelato; alleni solo gli adapter.
+#LoRA sarebbe un modo per fare il fine tuning aggiungendo parametri al modello, NON RIFACCIO L'INTERA neural-network
+#ritrasformiamo il modello in uno adatto per LoRA COME ? aggiungiamo layer di matrici per tuning
+"""
+r = 16 -> LoRA rank: la “capacità” dell’adapter.
+Più è alto → più parametri negli adapter → più capacità di adattamento, ma anche più VRAM/tempo.
+Regola pratica:
+task semplice / dataset piccolo: 4–8
+task medio: 8–16
+task difficile / stile molto diverso: 16–32
+Effetto collaterale: r↑ aumenta il rischio di overfitting se i dati sono pochi → usa lora_dropout > 0.
+MAGARI PROVIAMO A RIDURLO
+"""
 model = FastLanguageModel.get_peft_model(
     model,
-    r = 16,  # LoRA rank (higher = more capacity but slower)
-    target_modules = [
-        "q_proj", "k_proj", "v_proj", "o_proj",
-        "gate_proj", "up_proj", "down_proj"
+    #r = LoRA rank (quanto “potere” di adattamento ha; di solito 8, 16, 32), NON mettiamo Bill di parametri in più ma Million, meno havy
+    r = 16,  # LoRA rank (higher = more capacity but slower) sarebbe la capacità dell'adapter che vado ad aggiungere 
+    target_modules = [ #Quali sotto-matrici del Trasformer adattare.
+        "q_proj", "k_proj", "v_proj", "o_proj", #proiezioni dell’attenzione (Q/K/V + output).
+        "gate_proj", "up_proj", "down_proj" #MLP del blocco Trasformer.
     ],
     lora_alpha =  16,        # Scaling factor for LoRA
     lora_dropout = 0,          # No dropout for training stability
