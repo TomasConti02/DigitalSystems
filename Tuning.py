@@ -66,6 +66,16 @@ task medio: 8–16
 task difficile / stile molto diverso: 16–32
 Effetto collaterale: r↑ aumenta il rischio di overfitting se i dati sono pochi → usa lora_dropout > 0.
 MAGARI PROVIAMO A RIDURLO
+-----------------------------------------------------------------------------------------------------------
+lora_dropout = 0 -> Dropout applicato solo al ramo LoRA durante il training (regularization).
+Con 0 → massima capacità, ma più rischio di overfitting su dataset piccoli.
+Consigli:
+dataset piccolo/rumoroso: 0.05–0.1
+dataset medio/grande: 0–0.05
+----------------------------------------------------------------------------------------------------------
+use_rslora = False -> Rank-Stabilized LoRA: variante che tenta di stabilizzare il rango effettivo e la scala durante l’allenamento (mitiga “rank collapse”).
+False va benissimo in molti casi. Se noti instabilità o drift, puoi provare True (a costo di un po’ di complessità in più).
+
 """
 model = FastLanguageModel.get_peft_model(
     model,
@@ -81,12 +91,22 @@ model = FastLanguageModel.get_peft_model(
     use_gradient_checkpointing = "unsloth",  # Reduces VRAM usage during training
     random_state = 3407,       # Seed for reproducibility
     use_rslora = False,        # Disable Rank-Stabilized LoRA
-    loftq_config = None        # Not using LoftQ quantization
+    loftq_config = None        # NO QUANT ADAPTER, Not using LoftQ quantization LoftQ = tecnica per combinare quantizzazione e LoRA in modo consapevole (utile se vuoi 4-bit + LoRA con meno perdita).
 )
 ##################################################################################################
+"""
+Ogni modello LLM ha un formato diverso per le chat:
+come scrivere i messaggi dell’utente,
+come delimitare la risposta dell’assistente,
+quali special tokens usare (<|user|>, <|assistant|>, <s>, ecc).
+Se non usi il formato giusto, il modello non capisce più se sta leggendo un prompt dell’utente o se deve generare una risposta.
+Prende il tuo tokenizer originale e gli dice:
+“Quando preparo le conversazioni, usa la sintassi stile LLaMA-3.1”.
+In pratica aggiunge al tokenizer la funzione apply_chat_template, che sa come convertire una lista di messaggi in un prompt testuale (o in token) compatibile con il modello.
+"""
 from unsloth.chat_templates import get_chat_template
 #assegno al token il llama-3.1 template
-tokenizer = get_chat_template(
+tokenizer = get_chat_template( #in pratica dico al tokenizer il formato del prompt del chatbot e lo restituisco
     tokenizer,
     chat_template = "llama-3.1",
 )
