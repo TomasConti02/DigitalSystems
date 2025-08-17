@@ -167,24 +167,25 @@ from unsloth.chat_templates import standardize_sharegpt
 dataset = standardize_sharegpt(dataset)
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 ##################################################################################################
+"""
+SFTTrainer: viene da trl (Transformers Reinforcement Learning), è una classe comoda che estende Trainer di Hugging Face per fare fine-tuning supervisionato su dataset in stile chat/istruzioni.
+TrainingArguments: contiene tutti gli iperparametri e le configurazioni per l’addestramento (batch size, learning rate, logging, ecc).
+DataCollatorForSeq2Seq: gestisce la preparazione dei batch (padding, labels per la loss, ecc).
+is_bfloat16_supported(): funzione di unsloth che controlla se la tua GPU supporta bfloat16 (importante per usare meno memoria e avere training più stabile rispetto a fp16).
+"""
 from trl import SFTTrainer
 from transformers import TrainingArguments, DataCollatorForSeq2Seq
 from unsloth import is_bfloat16_supported
 """
-Quel pezzo di codice imposta e crea un trainer per fare supervised fine-tuning (SFT) 
-del tuo modello con Unsloth, usando la classe SFTTrainer di trl (Transformers 
-Reinforcement Learning).
-model → il modello LLaMA/Mistral o simile che vuoi fine-tunare.
-tokenizer → tokenizer compatibile con il modello.
-train_dataset → il dataset su cui fare training (in questo caso quello formattato 
-con dataset_text_field="text").
-dataset_text_field → nome della colonna del dataset che contiene il testo su cui 
-addestrare ("text" deve esistere).
-max_seq_length → lunghezza massima della sequenza di token (il resto viene troncato).
-data_collator → funzione che prepara i batch.
-dataset_num_proc=2 → numero di processi in parallelo per il preprocessing.
-packing=False → se fosse True, concatenerebbe più esempi corti in una 
-sequenza lunga (velocizza, ma non sempre adatto a dati chat).
+preparo il training loop -> SFTTrainer (Supervised Fine-Tuning Trainer) per addestrare il tuo modello con i dati preparati
+model → il modello di base che stai fine-tunando (es. LLaMA 3.1, Mistral, ecc).
+tokenizer → il tokenizer associato al modello (devono essere compatibili).
+train_dataset → il dataset formattato (quello che abbiamo passato per standardize_sharegpt + .map()), deve contenere la colonna "text".
+dataset_text_field="text" → dice al trainer quale colonna del dataset usare.
+max_seq_length → lunghezza massima della sequenza (i testi più lunghi vengono troncati).
+data_collator → funzione che costruisce i batch (applica padding, genera i label, ecc).
+dataset_num_proc=2 → numero di processi paralleli per il preprocessing (velocizza).
+packing=False → se fosse True, concatena esempi corti in sequenze più lunghe (più efficiente, ma può rovinare i dati tipo chat, quindi di solito lo lasci False).
 """
 trainer = SFTTrainer(
     model = model,
