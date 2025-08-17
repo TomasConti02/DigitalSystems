@@ -111,12 +111,33 @@ tokenizer = get_chat_template( #in pratica dico al tokenizer il formato del prom
     chat_template = "llama-3.1",
 )
 ##################################################################################################
+#ora cerchiamo di adattare il dataset grezzo al tuning
+#dataset organizzato in conversations 
+"""
+per ogni conversations (convo) -> formata da tanti domanda e risposta user e chatbot
+apply_chat_template → converte la lista di messaggi in testo formattato nello stile che il modello si aspetta (nel tuo caso llama-3.1).
+tokenize=False → ti restituisce una stringa di testo, non direttamente token.
+add_generation_prompt=False → NON aggiunge il tag speciale che segnala al modello di generare la risposta (utile durante addestramento; durante inference invece lo metti a True).
+return {"text": texts} → crea una nuova colonna "text" che contiene le conversazioni già
+Trasformo 
+{
+  "conversations": [
+    {"role": "user", "content": "ciao"},
+    {"role": "assistant", "content": "ciao! come stai?"}
+  ]
+}
+In 
+<|start_header_id|>user<|end_header_id|>
+ciao
+<|start_header_id|>assistant<|end_header_id|>
+ciao! come stai?
+"""
 def formatting_prompts_func(examples):
     convos = examples["conversations"]
     texts = [tokenizer.apply_chat_template(convo, tokenize = False, add_generation_prompt = False) for convo in convos]
     return { "text" : texts, }
 pass
-
+#faccio il load del dataset personalizzato 
 from datasets import load_dataset
 #dataset = load_dataset("tomasconti/TestTuning", split = "train")
 dataset = load_dataset(
