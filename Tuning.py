@@ -207,13 +207,17 @@ trainer = SFTTrainer(
         bf16 = is_bfloat16_supported(),
         logging_steps = 1,
         optim = "adamw_8bit",
-        weight_decay = 0.01,
+        weight_decay = 0.01, #regolarizzazione per evitare overfitting.
         lr_scheduler_type = "linear",
         seed = 3407,
         output_dir = "outputs",
         report_to = "none", # Use this for WandB etc
     ),
 )
+"""
+Prendi il mio modello, questo tokenizer, il dataset in text, addestralo per 60 step con 
+batch effettivo 8, ottimizzatore AdamW 8-bit, learning rate 2e-4, salva in outputs, e usa precisione fp16/bf16 a seconda della GPU
+"""
 ##################################################################################################
 """
 Quella riga sta dicendo al tuo trainer di calcolare la loss solo sulle risposte del 
