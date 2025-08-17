@@ -146,13 +146,23 @@ dataset = load_dataset(
     split = "train"                                 # Load the training split
 )
 ##################################################################################################
-from datasets import Dataset
+from datasets import Dataset #facciamo delle print check per vedere come è venuto fuori il load 
 dataset.to_pandas().head()
 print(dataset)
 print(dataset[0])  # Primo elemento per vedere la struttura
 print(dataset[1])
 print(dataset[2])
 ##################################################################################################
+"""
+Serve a uniformare il dataset a un formato compatibile con le chat template (conversations).
+I dataset tipo ShareGPT o simili spesso hanno strutture diverse -> standardize_sharegpt prende tutte queste varianti e le trasforma in uno schema unico
+
+.map() è un metodo dei dataset Hugging Face → applica una funzione a tutti gli esempi.
+Qui applichi la tua formatting_prompts_func, cioè la funzione che prende "conversations" e lo trasforma in testo già pronto col chat template LLaMA-3.1.
+batched=True significa che la funzione riceve un batch di esempi alla volta (un dizionario di liste), non un solo record.
+
+l dataset ora ha una colonna "text" con le conversazioni formattate esattamente come il modello si aspetta.
+"""
 from unsloth.chat_templates import standardize_sharegpt
 dataset = standardize_sharegpt(dataset)
 dataset = dataset.map(formatting_prompts_func, batched = True,)
@@ -165,21 +175,14 @@ Quel pezzo di codice imposta e crea un trainer per fare supervised fine-tuning (
 del tuo modello con Unsloth, usando la classe SFTTrainer di trl (Transformers 
 Reinforcement Learning).
 model → il modello LLaMA/Mistral o simile che vuoi fine-tunare.
-
 tokenizer → tokenizer compatibile con il modello.
-
 train_dataset → il dataset su cui fare training (in questo caso quello formattato 
 con dataset_text_field="text").
-
 dataset_text_field → nome della colonna del dataset che contiene il testo su cui 
 addestrare ("text" deve esistere).
-
 max_seq_length → lunghezza massima della sequenza di token (il resto viene troncato).
-
 data_collator → funzione che prepara i batch.
-
 dataset_num_proc=2 → numero di processi in parallelo per il preprocessing.
-
 packing=False → se fosse True, concatenerebbe più esempi corti in una 
 sequenza lunga (velocizza, ma non sempre adatto a dati chat).
 """
