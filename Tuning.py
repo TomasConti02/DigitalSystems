@@ -264,3 +264,12 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 """
+model.save_pretrained_gguf("/content/drive/MyDrive/Model", tokenizer, quantization_method="q4_k_m")
+# Salva sul tuo account Hugging Face
+model.push_to_hub_merged(
+    "tuo-username/llama3.2-3b-finetuned-blackhole",
+    tokenizer,
+    save_method = "merged_16bit",
+    token = "hf_tuo_token"  # Il tuo token di Hugging Face
+)
+model.save_pretrained_merged("llama3.2-3b-finetuned", tokenizer, save_method = "merged_16bit")
