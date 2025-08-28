@@ -254,22 +254,6 @@ inputs = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_new_tokens=200)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ##################################################################################################
-"""outputs = model.generate(
-    **inputs,
-    max_new_tokens=512,  # più spazio per completare
-    do_sample=True,      # sampling per creatività
-    top_p=0.9,           # nucleus sampling
-    temperature=0.7      # leggermente creativo ma non troppo
-)
-
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))
-"""
-model.save_pretrained_gguf("/content/drive/MyDrive/Model", tokenizer, quantization_method="q4_k_m")
-# Salva sul tuo account Hugging Face
-model.push_to_hub_merged(
-    "tuo-username/llama3.2-3b-finetuned-blackhole",
-    tokenizer,
-    save_method = "merged_16bit",
-    token = "hf_tuo_token"  # Il tuo token di Hugging Face
-)
-model.save_pretrained_merged("llama3.2-3b-finetuned", tokenizer, save_method = "merged_16bit")
+# Salvataggio
+model.save_pretrained("/content/drive/MyDrive/my_lora_model")
+tokenizer.save_pretrained("/content/drive/MyDrive/my_lora_model")
