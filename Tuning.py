@@ -255,5 +255,18 @@ outputs = model.generate(**inputs, max_new_tokens=200)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ##################################################################################################
 # Salvataggio
-model.save_pretrained("/content/drive/MyDrive/my_lora_model")
-tokenizer.save_pretrained("/content/drive/MyDrive/my_lora_model")
+#model.save_pretrained("/content/drive/MyDrive/my_lora_model")
+#tokenizer.save_pretrained("/content/drive/MyDrive/my_lora_model")
+# Aggiungi solo questa riga alla fine del tuo codice:
+model.save_pretrained_gguf("my_model", tokenizer, quantization_method="q4_k_m")
+"""
+# Crea un file chiamato "Modelfile" con questo contenuto:
+FROM ./my_model-unsloth.Q4_K_M.gguf
+TEMPLATE """<|start_header_id|>user<|end_header_id|>
+{{ .Prompt }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+
+# E questi 2 comandi:
+ollama create mio-modello -f Modelfile
+ollama run mio-modello "Ciao!"
+"""
