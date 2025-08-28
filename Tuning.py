@@ -44,7 +44,8 @@ fourbit_models = [ #solo una lista di modelli già quantizzati a 4 bit
 ]
 ##################################################################################################
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/Llama-3.2-3B-Instruct",  #il modello
+    #model_name = "unsloth/Llama-3.2-3B-Instruct",  #il modello
+    model_name = "unsloth/Llama-3.2-1B-Instruct",
     max_seq_length = max_seq_length, #max seq d token (max context lenght)
     dtype = dtype, #data type 16bit more accuracy
     load_in_4bit = False, 
